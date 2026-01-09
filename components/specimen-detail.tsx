@@ -1,10 +1,10 @@
 "use client"
 
-import type { Specimen } from "@/app/page"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { X, MapPin, Calendar } from "lucide-react"
 import Image from "next/image"
+import {Specimen} from "@/types/specimen";
 
 interface SpecimenDetailProps {
   specimen: Specimen
