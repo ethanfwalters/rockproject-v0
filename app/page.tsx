@@ -143,7 +143,6 @@ export default function Home() {
             <h1 className="text-4xl font-bold tracking-tight text-balance">Your Collection</h1>
             <p className="mt-2 text-muted-foreground">
               {specimens.length} specimen{specimens.length !== 1 ? "s" : ""} collected
-              {userEmail && <span className="ml-2">• {userEmail}</span>}
             </p>
           </div>
           <Button size="lg" onClick={() => setIsAddingSpecimen(true)} className="gap-2 rounded-full">

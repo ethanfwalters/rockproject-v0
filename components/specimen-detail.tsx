@@ -5,7 +5,6 @@ import type { Specimen } from "@/types/specimen"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { X, MapPin, Calendar, Pencil, Trash2, Tag } from "lucide-react"
-import Image from "next/image"
 import { EditSpecimenForm } from "./edit-specimen-form"
 import { CollectionMap } from "./collection-map"
 import {
@@ -96,18 +95,9 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
             {/* Image */}
             <Card className="overflow-hidden border-0 bg-card self-start">
               <div className="relative h-[300px] bg-muted">
-                {specimen.imageUrl ? (
-                  <Image
-                    src={specimen.imageUrl || "/placeholder.svg"}
-                    alt={specimen.name}
-                    fill
-                    className="object-contain"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-9xl opacity-20">🪨</span>
-                  </div>
-                )}
+                <div className="flex h-full items-center justify-center">
+                  <span className="text-9xl opacity-20">🪨</span>
+                </div>
               </div>
             </Card>
 

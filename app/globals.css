@@ -18,6 +18,16 @@
   margin: 8px 12px;
 }
 
+/* Lower z-index on leaflet containers so they don't overlap navbar */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-pane,
+.leaflet-control {
+  z-index: 1 !important;
+}
+
 :root {
   /* Modern color palette with rich blue primary for a premium feel */
   --background: oklch(0.99 0 0);
@@ -138,5 +148,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Add smooth transition for theme changes */
+  *,
+  *::before,
+  *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
   }
 }

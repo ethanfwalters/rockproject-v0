@@ -151,16 +151,16 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300">
-        <button
-          onClick={onClose}
-          className="absolute -right-4 -top-4 rounded-full bg-card p-2 shadow-lg transition-transform hover:scale-110"
-        >
-          <X className="h-5 w-5" />
-        </button>
+      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 mx-4">
+        <Card className="border-0 bg-card/50 p-8 shadow-2xl backdrop-blur relative">
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-full bg-muted p-2 transition-all hover:bg-muted/80 hover:scale-110 z-10"
+          >
+            <X className="h-5 w-5" />
+          </button>
 
-        <Card className="border-0 bg-card/50 p-8 shadow-2xl backdrop-blur">
-          <div className="mb-8 flex items-center gap-2">
+          <div className="mb-8 flex items-center gap-2 pr-12">
             {steps.map((s, i) => (
               <div
                 key={s}
