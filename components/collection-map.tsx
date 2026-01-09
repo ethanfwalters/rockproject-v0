@@ -18,13 +18,14 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { 
 
 export function CollectionMap({ specimens, height, showCard = true }: CollectionMapProps) {
   const [isMounted, setIsMounted] = useState(false)
-  const [leafletIcon, setLeafletIcon] = useState<typeof import("leaflet") | null>(null)
+  const [leafletModule, setLeafletModule] = useState<any>(null)
 
   useEffect(() => {
     setIsMounted(true)
     import("leaflet").then((L) => {
-      setLeafletIcon(L)
+      setLeafletModule(L)
     })
+    // @ts-ignore //todo: this can't be good
     import("leaflet/dist/leaflet.css")
   }, [])
 
@@ -55,9 +56,9 @@ export function CollectionMap({ specimens, height, showCard = true }: Collection
   }
 
   const createIcon = (type: string) => {
-    if (!leafletIcon) return undefined
+    if (!leafletModule) return undefined
     const color = getMarkerColor(type)
-    return leafletIcon.divIcon({
+    return leafletModule.divIcon({
       className: "custom-marker",
       html: `<div style="
         background-color: ${color};
@@ -90,7 +91,7 @@ export function CollectionMap({ specimens, height, showCard = true }: Collection
             Add location coordinates to your specimens to see them on the map
           </p>
         </div>
-      ) : !isMounted || !leafletIcon ? (
+      ) : !isMounted || !leafletModule ? (
         <div
           className="rounded-lg bg-muted/30 flex items-center justify-center"
           style={{ height: height || "auto", aspectRatio: height ? undefined : "4/3" }}
