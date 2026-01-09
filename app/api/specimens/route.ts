@@ -31,6 +31,8 @@ export async function GET() {
     dateAdded: spec.acquisition_date || spec.created_at.split("T")[0],
     location: spec.location,
     description: spec.description,
+    coordinates: spec.latitude && spec.longitude ? { lat: spec.latitude, lng: spec.longitude } : undefined,
+    tags: spec.tags || [],
     details: {
       hardness: spec.hardness?.toString(),
       composition: spec.composition,
@@ -72,6 +74,9 @@ export async function POST(request: Request) {
     dimensions: body.details?.dimensions,
     image_url: body.imageUrl,
     acquisition_date: body.dateAdded || new Date().toISOString().split("T")[0],
+    latitude: body.coordinates?.lat || null,
+    longitude: body.coordinates?.lng || null,
+    tags: body.tags || [],
   }
 
   const { data: newSpecimen, error } = await supabase.from("specimens").insert(specimenData).select().single()
@@ -88,6 +93,11 @@ export async function POST(request: Request) {
     dateAdded: newSpecimen.acquisition_date || newSpecimen.created_at.split("T")[0],
     location: newSpecimen.location,
     description: newSpecimen.description,
+    coordinates:
+      newSpecimen.latitude && newSpecimen.longitude
+        ? { lat: newSpecimen.latitude, lng: newSpecimen.longitude }
+        : undefined,
+    tags: newSpecimen.tags || [],
     details: {
       hardness: newSpecimen.hardness?.toString(),
       composition: newSpecimen.composition,
@@ -99,4 +109,106 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ specimen: transformedSpecimen })
+}
+
+export async function PUT(request: Request) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const body = await request.json()
+
+  if (!body.id) {
+    return NextResponse.json({ error: "Specimen ID is required" }, { status: 400 })
+  }
+
+  const specimenData = {
+    name: body.name,
+    type: body.type,
+    location: body.location,
+    description: body.description,
+    hardness: body.details?.hardness ? Number.parseFloat(body.details.hardness) : null,
+    luster: body.details?.luster,
+    color: body.details?.color,
+    composition: body.details?.composition,
+    weight: body.details?.weight ? Number.parseFloat(body.details.weight) : null,
+    dimensions: body.details?.dimensions,
+    image_url: body.imageUrl,
+    acquisition_date: body.dateAdded || null,
+    latitude: body.coordinates?.lat || null,
+    longitude: body.coordinates?.lng || null,
+    tags: body.tags || [],
+  }
+
+  const { data: updatedSpecimen, error } = await supabase
+    .from("specimens")
+    .update(specimenData)
+    .eq("id", body.id)
+    .eq("user_id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  const transformedSpecimen = {
+    id: updatedSpecimen.id,
+    name: updatedSpecimen.name,
+    type: updatedSpecimen.type,
+    imageUrl: updatedSpecimen.image_url,
+    dateAdded: updatedSpecimen.acquisition_date || updatedSpecimen.created_at.split("T")[0],
+    location: updatedSpecimen.location,
+    description: updatedSpecimen.description,
+    coordinates:
+      updatedSpecimen.latitude && updatedSpecimen.longitude
+        ? { lat: updatedSpecimen.latitude, lng: updatedSpecimen.longitude }
+        : undefined,
+    tags: updatedSpecimen.tags || [],
+    details: {
+      hardness: updatedSpecimen.hardness?.toString(),
+      composition: updatedSpecimen.composition,
+      color: updatedSpecimen.color,
+      luster: updatedSpecimen.luster,
+      weight: updatedSpecimen.weight?.toString(),
+      dimensions: updatedSpecimen.dimensions,
+    },
+  }
+
+  return NextResponse.json({ specimen: transformedSpecimen })
+}
+
+export async function DELETE(request: Request) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json({ error: "Specimen ID is required" }, { status: 400 })
+  }
+
+  const { error } = await supabase.from("specimens").delete().eq("id", id).eq("user_id", user.id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
 }

@@ -4,6 +4,7 @@ import type { Specimen } from "@/types/specimen"
 import { Card } from "@/components/ui/card"
 import { TrendingUp, Calendar, MapPin, Sparkles } from "lucide-react"
 import { useMemo } from "react"
+import { CollectionMap } from "./collection-map"
 
 interface CollectionStatsProps {
   specimens: Specimen[]
@@ -72,6 +73,8 @@ export function CollectionStats({ specimens }: CollectionStatsProps) {
           </div>
         </div>
       </Card>
+
+      <CollectionMap specimens={specimens} />
 
       {/* Type Breakdown */}
       <Card className="border-0 bg-card p-6">

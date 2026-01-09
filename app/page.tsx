@@ -9,7 +9,8 @@ import { CollectionOverview } from "@/components/collection-overview"
 import { AddSpecimenFlow } from "@/components/add-specimen-flow"
 import { SpecimenDetail } from "@/components/specimen-detail"
 import { CollectionStats } from "@/components/collection-stats"
-import { Plus, LogOut } from "lucide-react"
+import { Navbar } from "@/components/navbar"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 async function fetchSpecimens(): Promise<Specimen[]> {
@@ -29,6 +30,22 @@ async function addSpecimen(specimen: Omit<Specimen, "id" | "dateAdded">): Promis
   })
   const data = await response.json()
   return data.specimen
+}
+
+async function updateSpecimen(specimen: Specimen): Promise<Specimen> {
+  const response = await fetch("/api/specimens", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(specimen),
+  })
+  const data = await response.json()
+  return data.specimen
+}
+
+async function deleteSpecimen(id: string): Promise<void> {
+  await fetch(`/api/specimens?id=${id}`, {
+    method: "DELETE",
+  })
 }
 
 export default function Home() {
@@ -64,8 +81,32 @@ export default function Home() {
     },
   })
 
+  const updateSpecimenMutation = useMutation({
+    mutationFn: updateSpecimen,
+    onSuccess: (updatedSpecimen) => {
+      queryClient.invalidateQueries({ queryKey: ["specimens"] })
+      setSelectedSpecimen(updatedSpecimen)
+    },
+  })
+
+  const deleteSpecimenMutation = useMutation({
+    mutationFn: deleteSpecimen,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["specimens"] })
+      setSelectedSpecimen(null)
+    },
+  })
+
   const handleAddSpecimen = (specimen: Omit<Specimen, "id" | "dateAdded">) => {
     addSpecimenMutation.mutate(specimen)
+  }
+
+  const handleUpdateSpecimen = (specimen: Specimen) => {
+    updateSpecimenMutation.mutate(specimen)
+  }
+
+  const handleDeleteSpecimen = (id: string) => {
+    deleteSpecimenMutation.mutate(id)
   }
 
   const handleLogout = async () => {
@@ -77,8 +118,9 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-background">
-        <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-pulse mb-4">
@@ -87,14 +129,15 @@ export default function Home() {
               <p className="text-muted-foreground">Loading your collection...</p>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-balance">Your Collection</h1>
@@ -103,16 +146,10 @@ export default function Home() {
               {userEmail && <span className="ml-2">• {userEmail}</span>}
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button size="lg" onClick={() => setIsAddingSpecimen(true)} className="gap-2 rounded-full">
-              <Plus className="h-5 w-5" />
-              Add Specimen
-            </Button>
-            <Button size="lg" variant="outline" onClick={handleLogout} className="gap-2 rounded-full bg-transparent">
-              <LogOut className="h-5 w-5" />
-              Logout
-            </Button>
-          </div>
+          <Button size="lg" onClick={() => setIsAddingSpecimen(true)} className="gap-2 rounded-full">
+            <Plus className="h-5 w-5" />
+            Add Specimen
+          </Button>
         </div>
 
         {/* Collection Grid and Stats Panel */}
@@ -127,13 +164,21 @@ export default function Home() {
             <CollectionStats specimens={specimens} />
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Add Specimen Flow */}
       {isAddingSpecimen && <AddSpecimenFlow onClose={() => setIsAddingSpecimen(false)} onAdd={handleAddSpecimen} />}
 
-      {/* Specimen Detail */}
-      {selectedSpecimen && <SpecimenDetail specimen={selectedSpecimen} onClose={() => setSelectedSpecimen(null)} />}
-    </main>
+      {selectedSpecimen && (
+        <SpecimenDetail
+          specimen={selectedSpecimen}
+          onClose={() => setSelectedSpecimen(null)}
+          onUpdate={handleUpdateSpecimen}
+          onDelete={handleDeleteSpecimen}
+          isUpdating={updateSpecimenMutation.isPending}
+          isDeleting={deleteSpecimenMutation.isPending}
+        />
+      )}
+    </div>
   )
 }

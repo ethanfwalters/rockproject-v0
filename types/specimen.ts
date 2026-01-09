@@ -6,6 +6,11 @@ export type Specimen = {
   dateAdded: string
   location?: string
   description?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
+  tags?: string[]
   details?: {
     hardness?: string
     composition?: string

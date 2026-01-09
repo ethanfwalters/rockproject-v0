@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Search, LayoutGrid, List, ArrowUpDown, Check } from "lucide-react"
+import { Search, LayoutGrid, List, ArrowUpDown, Check, ChevronUp, ChevronDown } from "lucide-react"
 import Image from "next/image"
 
 interface CollectionOverviewProps {
@@ -15,11 +15,13 @@ interface CollectionOverviewProps {
 }
 
 type ViewMode = "card" | "table"
-type SortOption = "name" | "type" | "date" | "location"
+type SortOption = "name" | "type" | "date" | "location" | "tags"
+type SortDirection = "asc" | "desc"
 
 export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOverviewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState<SortOption>("date")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   const filteredAndSortedSpecimens = useMemo(() => {
@@ -29,33 +31,58 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
         specimen.name.toLowerCase().includes(query) ||
         specimen.type.toLowerCase().includes(query) ||
         specimen.location?.toLowerCase().includes(query) ||
-        specimen.description?.toLowerCase().includes(query)
+        specimen.description?.toLowerCase().includes(query) ||
+        specimen.tags?.some((tag) => tag.toLowerCase().includes(query))
       )
     })
 
     filtered.sort((a, b) => {
+      let comparison = 0
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name)
+          comparison = a.name.localeCompare(b.name)
+          break
         case "type":
-          return a.type.localeCompare(b.type)
+          comparison = a.type.localeCompare(b.type)
+          break
         case "date":
-          return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+          comparison = new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+          break
         case "location":
-          return (a.location || "").localeCompare(b.location || "")
+          comparison = (a.location || "").localeCompare(b.location || "")
+          break
+        case "tags":
+          comparison = (a.tags?.length || 0) - (b.tags?.length || 0)
+          break
         default:
-          return 0
+          comparison = 0
       }
+      return sortDirection === "asc" ? comparison : -comparison
     })
 
     return filtered
-  }, [specimens, searchQuery, sortBy])
+  }, [specimens, searchQuery, sortBy, sortDirection])
+
+  const handleColumnSort = (column: SortOption) => {
+    if (sortBy === column) {
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+    } else {
+      setSortBy(column)
+      setSortDirection(column === "date" ? "desc" : "asc")
+    }
+  }
+
+  const SortIndicator = ({ column }: { column: SortOption }) => {
+    if (sortBy !== column) return null
+    return sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+  }
 
   const sortOptions = [
     { value: "date" as const, label: "Date Added" },
     { value: "name" as const, label: "Name" },
     { value: "type" as const, label: "Type" },
     { value: "location" as const, label: "Location" },
+    { value: "tags" as const, label: "Tags" },
   ]
 
   if (specimens.length === 0) {
@@ -92,7 +119,13 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {sortOptions.map((option) => (
-                <DropdownMenuItem key={option.value} onClick={() => setSortBy(option.value)}>
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => {
+                    setSortBy(option.value)
+                    setSortDirection(option.value === "date" ? "desc" : "asc")
+                  }}
+                >
                   <Check className={`mr-2 h-4 w-4 ${sortBy === option.value ? "opacity-100" : "opacity-0"}`} />
                   {option.label}
                 </DropdownMenuItem>
@@ -161,6 +194,23 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                     </span>
                   </div>
                   {specimen.location && <p className="text-sm text-muted-foreground">{specimen.location}</p>}
+                  {specimen.tags && specimen.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {specimen.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {specimen.tags.length > 3 && (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          +{specimen.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <p className="mt-2 text-xs text-muted-foreground">
                     Added {new Date(specimen.dateAdded).toLocaleDateString()}
                   </p>
@@ -174,10 +224,51 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
               <table className="w-full">
                 <thead className="border-b bg-muted/50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Location</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Date Added</th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("name")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Name
+                        <SortIndicator column="name" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("type")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Type
+                        <SortIndicator column="type" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("location")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Location
+                        <SortIndicator column="location" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("tags")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Tags
+                        <SortIndicator column="tags" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("date")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Date Added
+                        <SortIndicator column="date" />
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -210,6 +301,27 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{specimen.location || "-"}</td>
+                      <td className="px-4 py-3">
+                        {specimen.tags && specimen.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {specimen.tags.slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {specimen.tags.length > 2 && (
+                              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                +{specimen.tags.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {new Date(specimen.dateAdded).toLocaleDateString()}
                       </td>

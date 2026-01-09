@@ -1,7 +1,22 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Add custom styles for Leaflet map markers */
+.custom-marker {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+}
 
 :root {
   /* Modern color palette with rich blue primary for a premium feel */
