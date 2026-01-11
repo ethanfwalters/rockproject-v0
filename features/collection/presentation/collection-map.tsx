@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from "react"
 import type { Specimen } from "@/types/specimen"
-import { Card } from "@/components/ui/card"
+import { Card } from "@/features/shared/presentation/card"
 import dynamic from "next/dynamic"
 
 interface CollectionMapProps {

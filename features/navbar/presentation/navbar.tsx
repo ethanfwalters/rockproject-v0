@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Moon, Sun, User, LogOut, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/features/shared/presentation/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/features/shared/presentation/dropdown-menu"
 import { createClient } from "@/lib/supabase/client"
 
 export function Navbar() {

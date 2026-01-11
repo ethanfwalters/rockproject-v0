@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import type { Specimen } from "@/types/specimen"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Button } from "@/features/shared/presentation/button"
+import { Card } from "@/features/shared/presentation/card"
 import { X, MapPin, Calendar, Pencil, Trash2, Tag } from "lucide-react"
-import { EditSpecimenForm } from "./edit-specimen-form"
-import { CollectionMap } from "./collection-map"
+import { EditSpecimenForm } from "../../specimenEdit/presentation/edit-specimen-form"
+import { CollectionMap } from "../../collection/presentation/collection-map"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/features/shared/presentation/alert-dialog"
 
 interface SpecimenDetailProps {
   specimen: Specimen

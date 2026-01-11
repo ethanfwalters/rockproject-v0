@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from "react"
 import type { Specimen } from "@/types/specimen"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Card } from "@/features/shared/presentation/card"
+import { Input } from "@/features/shared/presentation/input"
+import { Button } from "@/features/shared/presentation/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/features/shared/presentation/dropdown-menu"
 import { Search, LayoutGrid, List, ArrowUpDown, Check, ChevronUp, ChevronDown } from "lucide-react"
 import Image from "next/image"
 

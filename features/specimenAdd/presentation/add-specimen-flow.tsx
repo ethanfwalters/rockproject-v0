@@ -4,12 +4,12 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import type { Specimen } from "@/types/specimen"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/features/shared/presentation/button"
+import { Input } from "@/features/shared/presentation/input"
+import { Label } from "@/features/shared/presentation/label"
+import { Textarea } from "@/features/shared/presentation/textarea"
 import { X, ChevronRight, ChevronLeft, MapPin, Tag, Plus, Globe, Sparkles, Loader2 } from "lucide-react"
-import { Card } from "@/components/ui/card"
+import { Card } from "@/features/shared/presentation/card"
 
 interface AddSpecimenFlowProps {
   onClose: () => void

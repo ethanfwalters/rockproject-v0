@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, User, Mail, Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/features/shared/presentation/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/features/shared/presentation/card"
 import { createClient } from "@/lib/supabase/client"
-import { Navbar } from "@/components/navbar"
+import { Navbar } from "@/features/navbar/presentation/navbar"
 
 export default function ProfilePage() {
   const [user, setUser] = useState<{ email: string; created_at: string } | null>(null)
