@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Specimen } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
@@ -30,6 +30,14 @@ interface SpecimenDetailProps {
 export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdating, isDeleting }: SpecimenDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = "unset"
+    }
+  }, [])
 
   const handleSave = (updatedSpecimen: Specimen) => {
     onUpdate(updatedSpecimen)
@@ -93,28 +101,35 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
           {/* Main Content */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Image */}
-            <Card className="overflow-hidden border-0 bg-card self-start">
-              <div className="relative h-[300px] bg-muted">
-                {specimen.imageUrl ? (
+            <div className="overflow-hidden rounded-lg self-start">
+              {specimen.imageUrl ? (
+                <>
                   <img
                     src={specimen.imageUrl}
                     alt={specimen.name}
-                    className="h-full w-full object-cover"
+                    className="w-full h-auto"
                     onError={(e) => {
                       const target = e.currentTarget
                       target.style.display = "none"
                       const fallback = target.nextElementSibling
                       if (fallback) {
                         fallback.classList.remove("hidden")
+                        fallback.classList.add("flex")
                       }
                     }}
                   />
-                ) : null}
-                <div className={`flex h-full items-center justify-center ${specimen.imageUrl ? "hidden" : ""}`}>
-                  <span className="text-9xl opacity-20">🪨</span>
-                </div>
-              </div>
-            </Card>
+                  <div className="hidden h-[300px] bg-muted items-center justify-center rounded-lg">
+                    <span className="text-9xl opacity-20">🪨</span>
+                  </div>
+                </>
+              ) : (
+                <Card className="overflow-hidden border-0 bg-card">
+                  <div className="relative h-[300px] bg-muted flex items-center justify-center">
+                    <span className="text-9xl opacity-20">🪨</span>
+                  </div>
+                </Card>
+              )}
+            </div>
 
             {/* Info */}
             <div className="space-y-6">
