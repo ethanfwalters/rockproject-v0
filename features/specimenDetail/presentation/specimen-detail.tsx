@@ -30,6 +30,7 @@ interface SpecimenDetailProps {
 export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdating, isDeleting }: SpecimenDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isImageFullscreen, setIsImageFullscreen] = useState(false)
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
@@ -38,6 +39,17 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
       document.body.style.overflow = "unset"
     }
   }, [])
+
+  // Handle escape key to close fullscreen image
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isImageFullscreen) {
+        setIsImageFullscreen(false)
+      }
+    }
+    window.addEventListener("keydown", handleEscape)
+    return () => window.removeEventListener("keydown", handleEscape)
+  }, [isImageFullscreen])
 
   const handleSave = (updatedSpecimen: Specimen) => {
     onUpdate(updatedSpecimen)
@@ -107,7 +119,8 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
                   <img
                     src={specimen.imageUrl}
                     alt={specimen.name}
-                    className="w-full h-auto"
+                    className="w-full h-auto cursor-pointer transition-opacity hover:opacity-90"
+                    onClick={() => setIsImageFullscreen(true)}
                     onError={(e) => {
                       const target = e.currentTarget
                       target.style.display = "none"
@@ -214,6 +227,27 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      {isImageFullscreen && specimen.imageUrl && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setIsImageFullscreen(false)}
+        >
+          <button
+            onClick={() => setIsImageFullscreen(false)}
+            className="absolute top-4 right-4 text-white hover:text-white/80 transition-colors z-10"
+          >
+            <X className="h-8 w-8" />
+          </button>
+          <img
+            src={specimen.imageUrl}
+            alt={specimen.name}
+            className="max-h-full max-w-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
