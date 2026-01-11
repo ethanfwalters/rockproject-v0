@@ -95,7 +95,22 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
             {/* Image */}
             <Card className="overflow-hidden border-0 bg-card self-start">
               <div className="relative h-[300px] bg-muted">
-                <div className="flex h-full items-center justify-center">
+                {specimen.imageUrl ? (
+                  <img
+                    src={specimen.imageUrl}
+                    alt={specimen.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget
+                      target.style.display = "none"
+                      const fallback = target.nextElementSibling
+                      if (fallback) {
+                        fallback.classList.remove("hidden")
+                      }
+                    }}
+                  />
+                ) : null}
+                <div className={`flex h-full items-center justify-center ${specimen.imageUrl ? "hidden" : ""}`}>
                   <span className="text-9xl opacity-20">🪨</span>
                 </div>
               </div>

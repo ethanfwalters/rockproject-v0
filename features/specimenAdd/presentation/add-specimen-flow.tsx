@@ -8,15 +8,16 @@ import { Button } from "@/features/shared/presentation/button"
 import { Input } from "@/features/shared/presentation/input"
 import { Label } from "@/features/shared/presentation/label"
 import { Textarea } from "@/features/shared/presentation/textarea"
-import { X, ChevronRight, ChevronLeft, MapPin, Tag, Plus, Globe, Sparkles, Loader2 } from "lucide-react"
+import { X, ChevronRight, ChevronLeft, MapPin, Tag, Plus, Globe, Sparkles, Loader2, Image as ImageIcon } from "lucide-react"
 import { Card } from "@/features/shared/presentation/card"
+import { ImageUpload } from "@/features/shared/presentation/image-upload"
 
 interface AddSpecimenFlowProps {
   onClose: () => void
   onAdd: (specimen: Omit<Specimen, "id" | "dateAdded">) => void
 }
 
-type Step = "basics" | "location" | "tags" | "details" | "review"
+type Step = "basics" | "image" | "location" | "tags" | "details" | "review"
 
 export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
   const [step, setStep] = useState<Step>("basics")
@@ -24,6 +25,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
     type: "mineral",
     details: {},
     tags: [],
+    imageUrl: "",
   })
   const [coordinates, setCoordinates] = useState<{ lat: string; lng: string }>({ lat: "", lng: "" })
   const [tagInput, setTagInput] = useState("")
@@ -146,7 +148,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
 
   const canProceed = formData.name && formData.type
 
-  const steps: Step[] = ["basics", "location", "tags", "details", "review"]
+  const steps: Step[] = ["basics", "image", "location", "tags", "details", "review"]
   const currentStepIndex = steps.indexOf(step)
 
   return (
@@ -244,10 +246,48 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                 <Button variant="outline" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button onClick={() => setStep("location")} disabled={!canProceed} className="gap-2">
+                <Button onClick={() => setStep("image")} disabled={!canProceed} className="gap-2">
                   Continue
                   <ChevronRight className="h-4 w-4" />
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step: Image */}
+          {step === "image" && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                    <ImageIcon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-balance">Add a Photo</h2>
+                    <p className="mt-1 text-muted-foreground">Show off your specimen (optional)</p>
+                  </div>
+                </div>
+              </div>
+
+              <ImageUpload
+                currentImageUrl={formData.imageUrl}
+                onImageUrlChange={(url) => updateField("imageUrl", url || "")}
+              />
+
+              <div className="flex justify-between gap-3 pt-4">
+                <Button variant="ghost" onClick={() => setStep("basics")} className="gap-2">
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </Button>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep("review")}>
+                    Finish
+                  </Button>
+                  <Button onClick={() => setStep("location")} className="gap-2">
+                    Continue
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -330,7 +370,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
               </div>
 
               <div className="flex justify-between gap-3 pt-4">
-                <Button variant="ghost" onClick={() => setStep("basics")} className="gap-2">
+                <Button variant="ghost" onClick={() => setStep("image")} className="gap-2">
                   <ChevronLeft className="h-4 w-4" />
                   Back
                 </Button>
@@ -597,6 +637,12 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
               </div>
 
               <div className="space-y-4 rounded-xl border border-border bg-card/50 p-5">
+                {formData.imageUrl && (
+                  <div className="relative h-48 w-full overflow-hidden rounded-lg bg-muted">
+                    <img src={formData.imageUrl} alt={formData.name} className="h-full w-full object-cover" />
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-xl font-semibold">{formData.name}</h3>

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { deleteFromS3 } from "@/lib/s3/upload"
 
 export async function GET() {
   const supabase = await createClient()
@@ -129,6 +130,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Specimen ID is required" }, { status: 400 })
   }
 
+  // Fetch the existing specimen to get the old image URL
+  const { data: existingSpecimen } = await supabase
+    .from("specimens")
+    .select("image_url")
+    .eq("id", body.id)
+    .eq("user_id", user.id)
+    .single()
+
   const specimenData = {
     name: body.name,
     type: body.type,
@@ -157,6 +166,16 @@ export async function PUT(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Delete old image from S3 if it was changed
+  if (existingSpecimen?.image_url && existingSpecimen.image_url !== body.imageUrl) {
+    try {
+      await deleteFromS3(existingSpecimen.image_url)
+    } catch (err) {
+      console.error("Failed to delete old image from S3:", err)
+      // Continue even if deletion fails - don't block the update
+    }
   }
 
   const transformedSpecimen = {
@@ -204,10 +223,28 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Specimen ID is required" }, { status: 400 })
   }
 
+  // Fetch the specimen to get its image URL before deletion
+  const { data: specimen } = await supabase
+    .from("specimens")
+    .select("image_url")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
+
   const { error } = await supabase.from("specimens").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Delete image from S3 if it exists
+  if (specimen?.image_url) {
+    try {
+      await deleteFromS3(specimen.image_url)
+    } catch (err) {
+      console.error("Failed to delete image from S3:", err)
+      // Continue even if deletion fails - the specimen is already deleted
+    }
   }
 
   return NextResponse.json({ success: true })

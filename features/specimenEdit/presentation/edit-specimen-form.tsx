@@ -9,6 +9,7 @@ import { Input } from "@/features/shared/presentation/input"
 import { Label } from "@/features/shared/presentation/label"
 import { Textarea } from "@/features/shared/presentation/textarea"
 import { Card } from "@/features/shared/presentation/card"
+import { ImageUpload } from "@/features/shared/presentation/image-upload"
 import { X, Save, ChevronDown, ChevronUp, Tag, Plus } from "lucide-react"
 
 const SUGGESTED_TAGS = [
@@ -147,15 +148,11 @@ export function EditSpecimenForm({ specimen, onSave, onCancel, isSaving }: EditS
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input
-            id="imageUrl"
-            value={formData.imageUrl}
-            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-            placeholder="https://..."
-          />
-        </div>
+        <ImageUpload
+          currentImageUrl={formData.imageUrl}
+          onImageUrlChange={(url) => setFormData({ ...formData, imageUrl: url || "" })}
+          disabled={isSaving}
+        />
 
         <div className="space-y-2">
           <Label htmlFor="dateAdded">Acquisition Date</Label>
