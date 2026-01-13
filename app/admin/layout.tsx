@@ -44,6 +44,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   Import
                 </Link>
                 <Link
+                  href="/admin/app-users"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  Users
+                </Link>
+                <Link
                   href="/admin/users"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
