@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, User, Mail, Calendar } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, User, Mail, Calendar, Shield } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/features/shared/presentation/card"
 import { createClient } from "@/lib/supabase/client"
@@ -10,6 +11,7 @@ import { Navbar } from "@/features/navbar/presentation/navbar"
 
 export default function ProfilePage() {
   const [user, setUser] = useState<{ email: string; created_at: string } | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -29,6 +31,21 @@ export default function ProfilePage() {
     }
     getUser()
   }, [router])
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch("/api/admin/check-status")
+        if (response.ok) {
+          const data = await response.json()
+          setIsAdmin(data.isAdmin)
+        }
+      } catch (error) {
+        console.error("Failed to check admin status:", error)
+      }
+    }
+    checkAdminStatus()
+  }, [])
 
   if (!user) {
     return (
@@ -101,6 +118,15 @@ export default function ProfilePage() {
                 <p className="font-medium">Collector</p>
               </div>
             </div>
+
+            {isAdmin && (
+              <Link href="/admin" className="block mt-4">
+                <Button variant="default" className="w-full gap-2">
+                  <Shield className="h-5 w-5" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </main>

@@ -2,7 +2,7 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { checkAdminAuth } from "@/lib/admin-auth"
-import { Database, Home, Upload, BarChart3 } from "lucide-react"
+import { Database, Home, Upload, BarChart3, Users } from "lucide-react"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAdmin } = await checkAdminAuth()
@@ -42,6 +42,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 >
                   <Upload className="h-4 w-4" />
                   Import
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  Admin Users
                 </Link>
               </nav>
             </div>
