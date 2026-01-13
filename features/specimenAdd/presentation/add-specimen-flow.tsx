@@ -32,6 +32,14 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
   const [isLookingUp, setIsLookingUp] = useState(false)
   const [autoFilled, setAutoFilled] = useState(false)
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [])
+
   const updateField = (field: keyof Specimen, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -152,9 +160,9 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
   const currentStepIndex = steps.indexOf(step)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 mx-4">
-        <Card className="border-0 bg-card/50 p-8 shadow-2xl backdrop-blur relative">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-background/95 backdrop-blur-sm overflow-y-auto py-4 sm:py-8">
+      <div className="relative w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300 mx-4 my-auto">
+        <Card className="border-0 bg-card/50 p-4 sm:p-8 shadow-2xl backdrop-blur relative">
           <button
             onClick={onClose}
             className="absolute right-4 top-4 rounded-full bg-muted p-2 transition-all hover:bg-muted/80 hover:scale-110 z-10"
@@ -490,10 +498,10 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
 
           {/* Step: Details */}
           {step === "details" && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div>
-                <h2 className="text-3xl font-bold text-balance">Technical Details</h2>
-                <p className="mt-2 text-muted-foreground">For the geology enthusiasts</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-balance">Technical Details</h2>
+                <p className="mt-2 text-sm sm:text-base text-muted-foreground">For the geology enthusiasts</p>
                 {autoFilled && (
                   <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary">
                     <Sparkles className="h-4 w-4" />
@@ -502,10 +510,10 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                   <div>
-                    <Label htmlFor="color" className="text-base">
+                    <Label htmlFor="color" className="text-sm sm:text-base">
                       Color
                     </Label>
                     <Input
@@ -513,12 +521,12 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., Purple, Banded"
                       value={formData.details?.color || ""}
                       onChange={(e) => updateDetail("color", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                       autoFocus
                     />
                   </div>
                   <div>
-                    <Label htmlFor="hardness" className="text-base flex items-center gap-2">
+                    <Label htmlFor="hardness" className="text-sm sm:text-base flex items-center gap-2">
                       Hardness (Mohs)
                       {autoFilled && formData.details?.hardness && <Sparkles className="h-3 w-3 text-primary" />}
                     </Label>
@@ -527,11 +535,11 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., 7"
                       value={formData.details?.hardness || ""}
                       onChange={(e) => updateDetail("hardness", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="weight" className="text-base">
+                    <Label htmlFor="weight" className="text-sm sm:text-base">
                       Weight
                     </Label>
                     <Input
@@ -539,11 +547,11 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., 250g"
                       value={formData.details?.weight || ""}
                       onChange={(e) => updateDetail("weight", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="dimensions" className="text-base">
+                    <Label htmlFor="dimensions" className="text-sm sm:text-base">
                       Dimensions
                     </Label>
                     <Input
@@ -551,11 +559,11 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., 5cm x 3cm x 2cm"
                       value={formData.details?.dimensions || ""}
                       onChange={(e) => updateDetail("dimensions", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="luster" className="text-base flex items-center gap-2">
+                    <Label htmlFor="luster" className="text-sm sm:text-base flex items-center gap-2">
                       Luster
                       {autoFilled && formData.details?.luster && <Sparkles className="h-3 w-3 text-primary" />}
                     </Label>
@@ -564,11 +572,11 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., Vitreous, Waxy"
                       value={formData.details?.luster || ""}
                       onChange={(e) => updateDetail("luster", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="streak" className="text-base flex items-center gap-2">
+                    <Label htmlFor="streak" className="text-sm sm:text-base flex items-center gap-2">
                       Streak
                       {autoFilled && formData.details?.streak && <Sparkles className="h-3 w-3 text-primary" />}
                     </Label>
@@ -577,13 +585,13 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                       placeholder="e.g., White"
                       value={formData.details?.streak || ""}
                       onChange={(e) => updateDetail("streak", e.target.value)}
-                      className="mt-2"
+                      className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="composition" className="text-base flex items-center gap-2">
+                  <Label htmlFor="composition" className="text-sm sm:text-base flex items-center gap-2">
                     Chemical Composition
                     {autoFilled && formData.details?.composition && <Sparkles className="h-3 w-3 text-primary" />}
                   </Label>
@@ -592,12 +600,12 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                     placeholder="e.g., SiO₂"
                     value={formData.details?.composition || ""}
                     onChange={(e) => updateDetail("composition", e.target.value)}
-                    className="mt-2"
+                    className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="age" className="text-base">
+                  <Label htmlFor="age" className="text-sm sm:text-base">
                     Age / Period
                   </Label>
                   <Input
@@ -605,17 +613,17 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                     placeholder="e.g., Jurassic, 150 million years"
                     value={formData.details?.age || ""}
                     onChange={(e) => updateDetail("age", e.target.value)}
-                    className="mt-2"
+                    className="mt-1.5 sm:mt-2 h-10 sm:h-11"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-between gap-3 pt-4">
+              <div className="flex justify-between gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button variant="ghost" onClick={() => setStep("tags")} className="gap-2">
                   <ChevronLeft className="h-4 w-4" />
                   Back
                 </Button>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <Button variant="outline" onClick={() => setStep("review")}>
                     Finish
                   </Button>
