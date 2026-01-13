@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 
-// Mock database of mineral/rock/fossil properties
-// TODO: Replace with real data source (database, external API, etc.)
-const specimenDatabase: Record<
+// Legacy in-memory database - kept as fallback if database query fails
+const specimenDatabaseFallback: Record<
   string,
   {
     hardness?: string
@@ -293,26 +293,89 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Name parameter is required" }, { status: 400 })
   }
 
-  // First try exact match
-  let result = specimenDatabase[name]
+  try {
+    const supabase = await createClient()
 
-  // If no exact match, try partial match
-  if (!result) {
-    const matchingKey = Object.keys(specimenDatabase).find((key) => key.includes(name) || name.includes(key))
-    if (matchingKey) {
-      result = specimenDatabase[matchingKey]
+    // First try exact match (case-insensitive)
+    let { data: result } = await supabase
+      .from("specimen_reference")
+      .select("*")
+      .ilike("name", name)
+      .single()
+
+    // If no exact match, try partial match
+    if (!result) {
+      const { data: partialResults } = await supabase
+        .from("specimen_reference")
+        .select("*")
+        .or(`name.ilike.%${name}%,name.ilike.%${name.split(" ")[0]}%`)
+        .limit(1)
+
+      if (partialResults && partialResults.length > 0) {
+        result = partialResults[0]
+      }
     }
-  }
 
-  if (result) {
+    if (result) {
+      return NextResponse.json({
+        found: true,
+        data: {
+          type: result.type,
+          hardness: result.hardness,
+          luster: result.luster,
+          composition: result.composition,
+          streak: result.streak,
+          color: result.color,
+        },
+      })
+    }
+
+    // Fallback to in-memory database if not found in Supabase
+    let fallbackResult = specimenDatabaseFallback[name]
+    if (!fallbackResult) {
+      const matchingKey = Object.keys(specimenDatabaseFallback).find(
+        (key) => key.includes(name) || name.includes(key)
+      )
+      if (matchingKey) {
+        fallbackResult = specimenDatabaseFallback[matchingKey]
+      }
+    }
+
+    if (fallbackResult) {
+      return NextResponse.json({
+        found: true,
+        data: fallbackResult,
+      })
+    }
+
     return NextResponse.json({
-      found: true,
-      data: result,
+      found: false,
+      data: null,
+    })
+  } catch (error) {
+    console.error("Error looking up specimen:", error)
+
+    // On error, fall back to in-memory database
+    let result = specimenDatabaseFallback[name]
+    if (!result) {
+      const matchingKey = Object.keys(specimenDatabaseFallback).find(
+        (key) => key.includes(name) || name.includes(key)
+      )
+      if (matchingKey) {
+        result = specimenDatabaseFallback[matchingKey]
+      }
+    }
+
+    if (result) {
+      return NextResponse.json({
+        found: true,
+        data: result,
+      })
+    }
+
+    return NextResponse.json({
+      found: false,
+      data: null,
     })
   }
-
-  return NextResponse.json({
-    found: false,
-    data: null,
-  })
 }
