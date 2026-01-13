@@ -9,7 +9,7 @@ import { NextResponse } from "next/server"
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { isSuperAdmin, user, error: authError } = await checkSuperAdminAuth()
 
@@ -18,19 +18,20 @@ export async function DELETE(
   }
 
   const supabase = await createClient()
+  const { id } = await params
 
   // Prevent self-deletion
   const { data: targetAdmin } = await supabase
     .from("admin_users")
     .select("user_id")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (targetAdmin?.user_id === user.id) {
     return NextResponse.json({ error: "Cannot remove your own admin access" }, { status: 400 })
   }
 
-  const { error } = await supabase.from("admin_users").delete().eq("id", params.id)
+  const { error } = await supabase.from("admin_users").delete().eq("id", id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -46,7 +47,7 @@ export async function DELETE(
  */
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { isSuperAdmin, user, error: authError } = await checkSuperAdminAuth()
 
@@ -62,12 +63,13 @@ export async function PUT(
   }
 
   const supabase = await createClient()
+  const { id } = await params
 
   // Prevent self-modification
   const { data: targetAdmin } = await supabase
     .from("admin_users")
     .select("user_id")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (targetAdmin?.user_id === user.id) {
@@ -83,7 +85,7 @@ export async function PUT(
       is_super_admin,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", params.id)
+    .eq("id", id)
     .select()
     .single()
 
