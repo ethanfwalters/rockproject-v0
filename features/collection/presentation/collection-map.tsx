@@ -11,57 +11,54 @@ interface CollectionMapProps {
   showCard?: boolean
 }
 
-const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+  ssr: false,
+})
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
 const Marker = dynamic(() => import("react-leaflet").then((mod) => mod.Marker), { ssr: false })
 const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), { ssr: false })
 
 export function CollectionMap({ specimens, height, showCard = true }: CollectionMapProps) {
   const [isMounted, setIsMounted] = useState(false)
-  const [leafletModule, setLeafletModule] = useState<any>(null)
+  const [leafletModule, setLeafletModule] = useState<typeof import("leaflet") | null>(null)
 
   useEffect(() => {
     setIsMounted(true)
     import("leaflet").then((L) => {
       setLeafletModule(L)
     })
-    // @ts-ignore //todo: this can't be good
+    // @ts-ignore
     import("leaflet/dist/leaflet.css")
   }, [])
 
+  // Get markers from specimens with locality coordinates
   const markers = useMemo(() => {
     return specimens
-      .filter((s) => s.coordinates)
+      .filter(
+        (s) =>
+          s.locality?.latitude !== undefined &&
+          s.locality?.latitude !== null &&
+          s.locality?.longitude !== undefined &&
+          s.locality?.longitude !== null
+      )
       .map((s) => ({
         id: s.id,
-        name: s.name,
-        type: s.type,
-        location: s.location,
-        lat: s.coordinates!.lat,
-        lng: s.coordinates!.lng,
+        minerals: s.minerals || [],
+        locality: s.locality!,
+        lat: s.locality!.latitude!,
+        lng: s.locality!.longitude!,
       }))
   }, [specimens])
 
-  const getMarkerColor = (type: string) => {
-    switch (type) {
-      case "mineral":
-        return "#3b82f6"
-      case "rock":
-        return "#22c55e"
-      case "fossil":
-        return "#f59e0b"
-      default:
-        return "#3b82f6"
-    }
-  }
+  // Use a single color for all markers since we no longer have type
+  const markerColor = "#3b82f6" // Primary blue
 
-  const createIcon = (type: string) => {
+  const createIcon = () => {
     if (!leafletModule) return undefined
-    const color = getMarkerColor(type)
     return leafletModule.divIcon({
       className: "custom-marker",
       html: `<div style="
-        background-color: ${color};
+        background-color: ${markerColor};
         width: 24px;
         height: 24px;
         border-radius: 50%;
@@ -88,7 +85,7 @@ export function CollectionMap({ specimens, height, showCard = true }: Collection
           style={{ height: height || "auto", aspectRatio: height ? undefined : "4/3" }}
         >
           <p className="text-sm text-muted-foreground text-center px-4">
-            Add location coordinates to your specimens to see them on the map
+            Add localities with coordinates to see your specimens on the map
           </p>
         </div>
       ) : !isMounted || !leafletModule ? (
@@ -114,12 +111,15 @@ export function CollectionMap({ specimens, height, showCard = true }: Collection
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {markers.map((marker) => (
-              <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={createIcon(marker.type)}>
+              <Marker key={marker.id} position={[marker.lat, marker.lng]} icon={createIcon()}>
                 <Popup>
                   <div className="p-1">
-                    <p className="font-semibold text-sm">{marker.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{marker.type}</p>
-                    {marker.location && <p className="text-xs text-muted-foreground">{marker.location}</p>}
+                    <p className="font-semibold text-sm">
+                      {marker.minerals.map((m) => m.name).join(", ") || "Specimen"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {marker.locality.fullPath || marker.locality.name}
+                    </p>
                   </div>
                 </Popup>
               </Marker>
@@ -145,21 +145,12 @@ export function CollectionMap({ specimens, height, showCard = true }: Collection
 
       {mapContent}
 
-      {/* Legend */}
-      <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-          Minerals
+      {/* Info */}
+      {markers.length > 0 && (
+        <div className="mt-3 text-xs text-muted-foreground">
+          {markers.length} specimen{markers.length !== 1 ? "s" : ""} with coordinates
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-          Rocks
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-          Fossils
-        </div>
-      </div>
+      )}
     </Card>
   )
 }

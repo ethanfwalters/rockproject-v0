@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import type { Specimen } from "@/types/specimen"
+import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
-import { X, MapPin, Calendar, Pencil, Trash2, Tag } from "lucide-react"
+import { X, MapPin, Calendar, Pencil, Trash2, Gem, Ruler } from "lucide-react"
 import { EditSpecimenForm } from "../../specimenEdit/presentation/edit-specimen-form"
 import { CollectionMap } from "../../collection/presentation/collection-map"
+import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,13 +22,20 @@ import {
 interface SpecimenDetailProps {
   specimen: Specimen
   onClose: () => void
-  onUpdate: (specimen: Specimen) => void
+  onUpdate: (specimen: UpdateSpecimenInput) => void
   onDelete: (id: string) => void
   isUpdating: boolean
   isDeleting: boolean
 }
 
-export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdating, isDeleting }: SpecimenDetailProps) {
+export function SpecimenDetail({
+  specimen,
+  onClose,
+  onUpdate,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}: SpecimenDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isImageFullscreen, setIsImageFullscreen] = useState(false)
@@ -51,7 +59,7 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
     return () => window.removeEventListener("keydown", handleEscape)
   }, [isImageFullscreen])
 
-  const handleSave = (updatedSpecimen: Specimen) => {
+  const handleSave = (updatedSpecimen: UpdateSpecimenInput) => {
     onUpdate(updatedSpecimen)
     setIsEditing(false)
   }
@@ -60,6 +68,19 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
     onDelete(specimen.id)
     setShowDeleteDialog(false)
   }
+
+  // Get display name from primary mineral
+  const displayName =
+    specimen.minerals && specimen.minerals.length > 0
+      ? specimen.minerals[0].name
+      : "Specimen"
+
+  // Check if specimen has coordinates (from locality)
+  const hasCoordinates =
+    specimen.locality?.latitude !== undefined &&
+    specimen.locality?.latitude !== null &&
+    specimen.locality?.longitude !== undefined &&
+    specimen.locality?.longitude !== null
 
   if (isEditing) {
     return (
@@ -91,7 +112,12 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
               Close
             </Button>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="gap-2 bg-transparent" onClick={() => setIsEditing(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-transparent"
+                onClick={() => setIsEditing(true)}
+              >
                 <Pencil className="h-4 w-4" />
                 Edit
               </Button>
@@ -104,9 +130,6 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
                 <Trash2 className="h-4 w-4" />
                 Delete
               </Button>
-              <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary capitalize">
-                {specimen.type}
-              </span>
             </div>
           </div>
 
@@ -118,7 +141,7 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
                 <>
                   <img
                     src={specimen.imageUrl}
-                    alt={specimen.name}
+                    alt={displayName}
                     className="w-full h-auto cursor-pointer transition-opacity hover:opacity-90"
                     onClick={() => setIsImageFullscreen(true)}
                     onError={(e) => {
@@ -132,13 +155,13 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
                     }}
                   />
                   <div className="hidden h-[300px] bg-muted items-center justify-center rounded-lg">
-                    <span className="text-9xl opacity-20">🪨</span>
+                    <Gem className="h-24 w-24 opacity-20" />
                   </div>
                 </>
               ) : (
                 <Card className="overflow-hidden border-0 bg-card">
                   <div className="relative h-[300px] bg-muted flex items-center justify-center">
-                    <span className="text-9xl opacity-20">🪨</span>
+                    <Gem className="h-24 w-24 opacity-20" />
                   </div>
                 </Card>
               )}
@@ -146,70 +169,103 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
 
             {/* Info */}
             <div className="space-y-6">
+              {/* Minerals */}
               <div>
-                <h1 className="text-4xl font-bold text-balance">{specimen.name}</h1>
+                <h1 className="text-4xl font-bold text-balance">{displayName}</h1>
+                {specimen.minerals && specimen.minerals.length > 1 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {specimen.minerals.slice(1).map((mineral, index) => (
+                      <span
+                        key={mineral.id}
+                        className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                      >
+                        {index === 0 ? "Secondary: " : ""}
+                        {mineral.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                  {specimen.location && (
+                  {specimen.locality && (
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      {specimen.location}
+                      {specimen.locality.fullPath || specimen.locality.name}
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Added {new Date(specimen.dateAdded).toLocaleDateString()}
+                    Added {new Date(specimen.createdAt).toLocaleDateString()}
                   </div>
                 </div>
               </div>
 
-              {/* Tags */}
-              {specimen.tags && specimen.tags.length > 0 && (
+              {/* Minerals list with ranks */}
+              {specimen.minerals && specimen.minerals.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    <h2 className="text-sm font-medium text-muted-foreground">Tags</h2>
+                    <Gem className="h-4 w-4 text-muted-foreground" />
+                    <h2 className="text-sm font-medium text-muted-foreground">Minerals</h2>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {specimen.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
+                  <Card className="border-0 bg-muted/50 p-4">
+                    <div className="space-y-2">
+                      {specimen.minerals.map((mineral, index) => (
+                        <div key={mineral.id} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-16">
+                            {index === 0
+                              ? "Primary"
+                              : index === 1
+                                ? "Secondary"
+                                : index === 2
+                                  ? "Tertiary"
+                                  : `${index + 1}th`}
+                          </span>
+                          <span className="font-medium">{mineral.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
                 </div>
               )}
 
-              {specimen.description && (
-                <Card className="border-0 bg-muted/50 p-4">
-                  <p className="leading-relaxed">{specimen.description}</p>
-                </Card>
-              )}
-
-              {specimen.details && Object.keys(specimen.details).length > 0 && (
+              {/* Dimensions */}
+              {formatDimensions(specimen.length, specimen.width, specimen.height) && (
                 <div>
-                  <h2 className="mb-4 text-xl font-semibold">Details</h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {Object.entries(specimen.details).map(([key, value]) => {
-                      if (!value) return null
-                      return (
-                        <Card key={key} className="border-0 bg-card p-4">
-                          <p className="text-xs text-muted-foreground capitalize">
-                            {key.replace(/([A-Z])/g, " $1").trim()}
-                          </p>
-                          <p className="mt-1 font-semibold">{value}</p>
-                        </Card>
-                      )
-                    })}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Ruler className="h-4 w-4 text-muted-foreground" />
+                    <h2 className="text-sm font-medium text-muted-foreground">Dimensions</h2>
                   </div>
+                  <Card className="border-0 bg-muted/50 p-4">
+                    <p className="font-medium">
+                      {formatDimensions(specimen.length, specimen.width, specimen.height)}
+                    </p>
+                    <div className="mt-2 grid grid-cols-3 gap-4 text-sm text-muted-foreground">
+                      {specimen.length && (
+                        <div>
+                          <span className="block text-xs">Length</span>
+                          <span className="font-medium text-foreground">{specimen.length} mm</span>
+                        </div>
+                      )}
+                      {specimen.width && (
+                        <div>
+                          <span className="block text-xs">Width</span>
+                          <span className="font-medium text-foreground">{specimen.width} mm</span>
+                        </div>
+                      )}
+                      {specimen.height && (
+                        <div>
+                          <span className="block text-xs">Height</span>
+                          <span className="font-medium text-foreground">{specimen.height} mm</span>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
                 </div>
               )}
 
-              {specimen.coordinates && (
+              {/* Map */}
+              {hasCoordinates && (
                 <div>
-                  <h2 className="mb-4 text-xl font-semibold">Collection Location</h2>
+                  <h2 className="mb-4 text-xl font-semibold">Location</h2>
                   <Card className="border-0 bg-card overflow-hidden">
                     <div className="h-[250px] w-full">
                       <CollectionMap specimens={[specimen]} height="250px" showCard={false} />
@@ -217,7 +273,8 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
                     <div className="p-3 border-t border-border bg-muted/30">
                       <p className="text-sm text-muted-foreground flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
-                        {specimen.coordinates.lat.toFixed(4)}°, {specimen.coordinates.lng.toFixed(4)}°
+                        {specimen.locality?.latitude?.toFixed(4)}°,{" "}
+                        {specimen.locality?.longitude?.toFixed(4)}°
                       </p>
                     </div>
                   </Card>
@@ -242,7 +299,7 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
           </button>
           <img
             src={specimen.imageUrl}
-            alt={specimen.name}
+            alt={displayName}
             className="max-h-full max-w-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />
@@ -255,7 +312,8 @@ export function SpecimenDetail({ specimen, onClose, onUpdate, onDelete, isUpdati
           <AlertDialogHeader>
             <AlertDialogTitle>Delete specimen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{specimen.name}"? This action cannot be undone.
+              Are you sure you want to delete this {displayName} specimen? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

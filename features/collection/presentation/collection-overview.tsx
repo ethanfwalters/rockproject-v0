@@ -5,9 +5,15 @@ import type { Specimen } from "@/types/specimen"
 import { Card } from "@/features/shared/presentation/card"
 import { Input } from "@/features/shared/presentation/input"
 import { Button } from "@/features/shared/presentation/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/features/shared/presentation/dropdown-menu"
-import { Search, LayoutGrid, List, ArrowUpDown, Check, ChevronUp, ChevronDown } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/features/shared/presentation/dropdown-menu"
+import { Search, LayoutGrid, List, ArrowUpDown, Check, ChevronUp, ChevronDown, Gem } from "lucide-react"
 import Image from "next/image"
+import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
 
 interface CollectionOverviewProps {
   specimens: Specimen[]
@@ -15,7 +21,7 @@ interface CollectionOverviewProps {
 }
 
 type ViewMode = "card" | "table"
-type SortOption = "name" | "type" | "date" | "location" | "tags"
+type SortOption = "mineral" | "locality" | "date" | "dimensions"
 type SortDirection = "asc" | "desc"
 
 export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOverviewProps) {
@@ -27,32 +33,35 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
   const filteredAndSortedSpecimens = useMemo(() => {
     const filtered = specimens.filter((specimen) => {
       const query = searchQuery.toLowerCase()
+      const mineralNames = specimen.minerals?.map((m) => m.name.toLowerCase()).join(" ") || ""
+      const localityName = specimen.locality?.name?.toLowerCase() || ""
+      const localityPath = specimen.locality?.fullPath?.toLowerCase() || ""
+
       return (
-        specimen.name.toLowerCase().includes(query) ||
-        specimen.type.toLowerCase().includes(query) ||
-        specimen.location?.toLowerCase().includes(query) ||
-        specimen.description?.toLowerCase().includes(query) ||
-        specimen.tags?.some((tag) => tag.toLowerCase().includes(query))
+        mineralNames.includes(query) || localityName.includes(query) || localityPath.includes(query)
       )
     })
 
     filtered.sort((a, b) => {
       let comparison = 0
       switch (sortBy) {
-        case "name":
-          comparison = a.name.localeCompare(b.name)
+        case "mineral":
+          const aMineral = a.minerals?.[0]?.name || ""
+          const bMineral = b.minerals?.[0]?.name || ""
+          comparison = aMineral.localeCompare(bMineral)
           break
-        case "type":
-          comparison = a.type.localeCompare(b.type)
+        case "locality":
+          const aLocality = a.locality?.name || ""
+          const bLocality = b.locality?.name || ""
+          comparison = aLocality.localeCompare(bLocality)
           break
         case "date":
-          comparison = new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+          comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           break
-        case "location":
-          comparison = (a.location || "").localeCompare(b.location || "")
-          break
-        case "tags":
-          comparison = (a.tags?.length || 0) - (b.tags?.length || 0)
+        case "dimensions":
+          const aSize = (a.length || 0) * (a.width || 0) * (a.height || 0)
+          const bSize = (b.length || 0) * (b.width || 0) * (b.height || 0)
+          comparison = bSize - aSize
           break
         default:
           comparison = 0
@@ -74,23 +83,38 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
 
   const SortIndicator = ({ column }: { column: SortOption }) => {
     if (sortBy !== column) return null
-    return sortDirection === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+    return sortDirection === "asc" ? (
+      <ChevronUp className="h-4 w-4" />
+    ) : (
+      <ChevronDown className="h-4 w-4" />
+    )
   }
 
   const sortOptions = [
     { value: "date" as const, label: "Date Added" },
-    { value: "name" as const, label: "Name" },
-    { value: "type" as const, label: "Type" },
-    { value: "location" as const, label: "Location" },
-    { value: "tags" as const, label: "Tags" },
+    { value: "mineral" as const, label: "Mineral" },
+    { value: "locality" as const, label: "Locality" },
+    { value: "dimensions" as const, label: "Size" },
   ]
+
+  // Helper to get primary mineral name
+  const getPrimaryMineral = (specimen: Specimen) => {
+    return specimen.minerals?.[0]?.name || "Unknown"
+  }
+
+  // Helper to get additional minerals count
+  const getAdditionalMineralsCount = (specimen: Specimen) => {
+    return (specimen.minerals?.length || 0) - 1
+  }
 
   if (specimens.length === 0) {
     return (
       <div className="flex min-h-[400px] items-center justify-center rounded-2xl border-2 border-dashed">
         <div className="text-center">
           <p className="text-lg text-muted-foreground">No specimens yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">Add your first specimen to get started</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add your first specimen to get started
+          </p>
         </div>
       </div>
     )
@@ -102,7 +126,7 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
         <div className="relative flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search collection..."
+            placeholder="Search by mineral or locality..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -114,7 +138,9 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2 bg-transparent">
                 <ArrowUpDown className="h-4 w-4" />
-                <span className="hidden sm:inline">{sortOptions.find((opt) => opt.value === sortBy)?.label}</span>
+                <span className="hidden sm:inline">
+                  {sortOptions.find((opt) => opt.value === sortBy)?.label}
+                </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -126,7 +152,9 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                     setSortDirection(option.value === "date" ? "desc" : "asc")
                   }}
                 >
-                  <Check className={`mr-2 h-4 w-4 ${sortBy === option.value ? "opacity-100" : "opacity-0"}`} />
+                  <Check
+                    className={`mr-2 h-4 w-4 ${sortBy === option.value ? "opacity-100" : "opacity-0"}`}
+                  />
                   {option.label}
                 </DropdownMenuItem>
               ))}
@@ -176,43 +204,37 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                   {specimen.imageUrl ? (
                     <Image
                       src={specimen.imageUrl || "/placeholder.svg"}
-                      alt={specimen.name}
+                      alt={getPrimaryMineral(specimen)}
                       fill
                       className="object-cover transition-transform group-hover:scale-110"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <span className="text-6xl opacity-20">🪨</span>
+                      <Gem className="h-16 w-16 opacity-20" />
                     </div>
                   )}
                 </div>
                 <div className="p-4">
                   <div className="mb-2 flex items-start justify-between">
-                    <h3 className="text-lg font-semibold text-balance">{specimen.name}</h3>
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
-                      {specimen.type}
-                    </span>
+                    <h3 className="text-lg font-semibold text-balance">{getPrimaryMineral(specimen)}</h3>
+                    {getAdditionalMineralsCount(specimen) > 0 && (
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                        +{getAdditionalMineralsCount(specimen)} more
+                      </span>
+                    )}
                   </div>
-                  {specimen.location && <p className="text-sm text-muted-foreground">{specimen.location}</p>}
-                  {specimen.tags && specimen.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {specimen.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {specimen.tags.length > 3 && (
-                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          +{specimen.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
+                  {specimen.locality && (
+                    <p className="text-sm text-muted-foreground">
+                      {specimen.locality.name}
+                    </p>
+                  )}
+                  {formatDimensions(specimen.length, specimen.width, specimen.height) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatDimensions(specimen.length, specimen.width, specimen.height)}
+                    </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Added {new Date(specimen.dateAdded).toLocaleDateString()}
+                    Added {new Date(specimen.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </Card>
@@ -226,38 +248,30 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                   <tr>
                     <th
                       className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
-                      onClick={() => handleColumnSort("name")}
+                      onClick={() => handleColumnSort("mineral")}
                     >
                       <div className="flex items-center gap-1">
-                        Name
-                        <SortIndicator column="name" />
+                        Primary Mineral
+                        <SortIndicator column="mineral" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Other Minerals</th>
+                    <th
+                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
+                      onClick={() => handleColumnSort("locality")}
+                    >
+                      <div className="flex items-center gap-1">
+                        Locality
+                        <SortIndicator column="locality" />
                       </div>
                     </th>
                     <th
                       className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
-                      onClick={() => handleColumnSort("type")}
+                      onClick={() => handleColumnSort("dimensions")}
                     >
                       <div className="flex items-center gap-1">
-                        Type
-                        <SortIndicator column="type" />
-                      </div>
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
-                      onClick={() => handleColumnSort("location")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Location
-                        <SortIndicator column="location" />
-                      </div>
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-sm font-medium cursor-pointer hover:bg-muted/80 transition-colors select-none"
-                      onClick={() => handleColumnSort("tags")}
-                    >
-                      <div className="flex items-center gap-1">
-                        Tags
-                        <SortIndicator column="tags" />
+                        Dimensions
+                        <SortIndicator column="dimensions" />
                       </div>
                     </th>
                     <th
@@ -284,37 +298,33 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                             {specimen.imageUrl ? (
                               <Image
                                 src={specimen.imageUrl || "/placeholder.svg"}
-                                alt={specimen.name}
+                                alt={getPrimaryMineral(specimen)}
                                 fill
                                 className="object-cover"
                               />
                             ) : (
-                              <div className="flex h-full items-center justify-center text-lg opacity-30">🪨</div>
+                              <div className="flex h-full items-center justify-center">
+                                <Gem className="h-5 w-5 opacity-30" />
+                              </div>
                             )}
                           </div>
-                          <span className="font-medium">{specimen.name}</span>
+                          <span className="font-medium">{getPrimaryMineral(specimen)}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary capitalize">
-                          {specimen.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{specimen.location || "-"}</td>
-                      <td className="px-4 py-3">
-                        {specimen.tags && specimen.tags.length > 0 ? (
+                        {specimen.minerals && specimen.minerals.length > 1 ? (
                           <div className="flex flex-wrap gap-1">
-                            {specimen.tags.slice(0, 2).map((tag) => (
+                            {specimen.minerals.slice(1, 3).map((mineral) => (
                               <span
-                                key={tag}
+                                key={mineral.id}
                                 className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
                               >
-                                {tag}
+                                {mineral.name}
                               </span>
                             ))}
-                            {specimen.tags.length > 2 && (
+                            {specimen.minerals.length > 3 && (
                               <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                +{specimen.tags.length - 2}
+                                +{specimen.minerals.length - 3}
                               </span>
                             )}
                           </div>
@@ -323,7 +333,13 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {new Date(specimen.dateAdded).toLocaleDateString()}
+                        {specimen.locality?.name || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {formatDimensions(specimen.length, specimen.width, specimen.height) || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {new Date(specimen.createdAt).toLocaleDateString()}
                       </td>
                     </tr>
                   ))}

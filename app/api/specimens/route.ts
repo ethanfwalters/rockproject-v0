@@ -2,6 +2,33 @@ import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { deleteFromS3 } from "@/lib/s3/upload"
 
+async function getAncestors(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  parentId: string | null
+): Promise<Array<{ id: string; name: string; kind: string; parentId: string | null }>> {
+  if (!parentId) return []
+
+  const { data: parent, error } = await supabase
+    .from("localities")
+    .select("id, name, kind, parent_id")
+    .eq("id", parentId)
+    .single()
+
+  if (error || !parent) return []
+
+  const ancestors = await getAncestors(supabase, parent.parent_id)
+
+  return [
+    {
+      id: parent.id,
+      name: parent.name,
+      kind: parent.kind,
+      parentId: parent.parent_id,
+    },
+    ...ancestors,
+  ]
+}
+
 export async function GET() {
   const supabase = await createClient()
 
@@ -14,9 +41,31 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  // Fetch specimens with locality join
   const { data: specimens, error } = await supabase
     .from("specimens")
-    .select("*")
+    .select(
+      `
+      id,
+      user_id,
+      image_url,
+      created_at,
+      locality_id,
+      mineral_ids,
+      length,
+      width,
+      height,
+      localities (
+        id,
+        name,
+        latitude,
+        longitude,
+        kind,
+        parent_id,
+        created_at
+      )
+    `
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -24,25 +73,99 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const transformedSpecimens = specimens.map((spec) => ({
-    id: spec.id,
-    name: spec.name,
-    type: spec.type,
-    imageUrl: spec.image_url,
-    dateAdded: spec.acquisition_date || spec.created_at.split("T")[0],
-    location: spec.location,
-    description: spec.description,
-    coordinates: spec.latitude && spec.longitude ? { lat: spec.latitude, lng: spec.longitude } : undefined,
-    tags: spec.tags || [],
-    details: {
-      hardness: spec.hardness?.toString(),
-      composition: spec.composition,
-      color: spec.color,
-      luster: spec.luster,
-      weight: spec.weight?.toString(),
-      dimensions: spec.dimensions,
-    },
-  }))
+  // Get all unique mineral IDs from all specimens
+  const allMineralIds = new Set<string>()
+  for (const spec of specimens) {
+    if (spec.mineral_ids) {
+      for (const id of spec.mineral_ids) {
+        allMineralIds.add(id)
+      }
+    }
+  }
+
+  // Fetch all minerals in one query
+  let mineralsMap: Record<string, { id: string; name: string; createdAt: string }> = {}
+  if (allMineralIds.size > 0) {
+    const { data: minerals } = await supabase
+      .from("minerals")
+      .select("id, name, created_at")
+      .in("id", Array.from(allMineralIds))
+
+    if (minerals) {
+      mineralsMap = minerals.reduce(
+        (acc, m) => {
+          acc[m.id] = { id: m.id, name: m.name, createdAt: m.created_at }
+          return acc
+        },
+        {} as Record<string, { id: string; name: string; createdAt: string }>
+      )
+    }
+  }
+
+  // Fetch ancestors for all localities that have parents
+  const localityAncestorsMap: Record<string, { ancestors: typeof ancestors; fullPath: string }> = {}
+  for (const spec of specimens) {
+    const locality = spec.localities as {
+      id: string
+      name: string
+      latitude: number | null
+      longitude: number | null
+      kind: string
+      parent_id: string | null
+      created_at: string
+    } | null
+
+    if (locality && !localityAncestorsMap[locality.id]) {
+      const ancestors = await getAncestors(supabase, locality.parent_id)
+      const pathParts = [locality.name, ...ancestors.map((a) => a.name)]
+      localityAncestorsMap[locality.id] = {
+        ancestors,
+        fullPath: pathParts.join(", "),
+      }
+    }
+  }
+
+  // Transform specimens
+  const transformedSpecimens = specimens.map((spec) => {
+    const locality = spec.localities as {
+      id: string
+      name: string
+      latitude: number | null
+      longitude: number | null
+      kind: string
+      parent_id: string | null
+      created_at: string
+    } | null
+
+    const mineralIds = spec.mineral_ids || []
+    const minerals = mineralIds.map((id: string) => mineralsMap[id]).filter(Boolean)
+
+    const localityData = locality
+      ? {
+          id: locality.id,
+          name: locality.name,
+          latitude: locality.latitude,
+          longitude: locality.longitude,
+          kind: locality.kind,
+          parentId: locality.parent_id,
+          createdAt: locality.created_at,
+          ...localityAncestorsMap[locality.id],
+        }
+      : null
+
+    return {
+      id: spec.id,
+      imageUrl: spec.image_url,
+      createdAt: spec.created_at,
+      localityId: spec.locality_id,
+      mineralIds,
+      length: spec.length,
+      width: spec.width,
+      height: spec.height,
+      locality: localityData,
+      minerals,
+    }
+  })
 
   return NextResponse.json({ specimens: transformedSpecimens })
 }
@@ -63,21 +186,12 @@ export async function POST(request: Request) {
 
   const specimenData = {
     user_id: user.id,
-    name: body.name,
-    type: body.type,
-    location: body.location,
-    description: body.description,
-    hardness: body.details?.hardness ? Number.parseFloat(body.details.hardness) : null,
-    luster: body.details?.luster,
-    color: body.details?.color,
-    composition: body.details?.composition,
-    weight: body.details?.weight ? Number.parseFloat(body.details.weight) : null,
-    dimensions: body.details?.dimensions,
-    image_url: body.imageUrl,
-    acquisition_date: body.dateAdded || new Date().toISOString().split("T")[0],
-    latitude: body.coordinates?.lat || null,
-    longitude: body.coordinates?.lng || null,
-    tags: body.tags || [],
+    image_url: body.imageUrl || null,
+    locality_id: body.localityId || null,
+    mineral_ids: body.mineralIds || [],
+    length: body.length ?? null,
+    width: body.width ?? null,
+    height: body.height ?? null,
   }
 
   const { data: newSpecimen, error } = await supabase.from("specimens").insert(specimenData).select().single()
@@ -86,27 +200,63 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Fetch related data for response
+  let locality = null
+  if (newSpecimen.locality_id) {
+    const { data: localityData } = await supabase
+      .from("localities")
+      .select("*")
+      .eq("id", newSpecimen.locality_id)
+      .single()
+
+    if (localityData) {
+      const ancestors = await getAncestors(supabase, localityData.parent_id)
+      const pathParts = [localityData.name, ...ancestors.map((a) => a.name)]
+      locality = {
+        id: localityData.id,
+        name: localityData.name,
+        latitude: localityData.latitude,
+        longitude: localityData.longitude,
+        kind: localityData.kind,
+        parentId: localityData.parent_id,
+        createdAt: localityData.created_at,
+        ancestors,
+        fullPath: pathParts.join(", "),
+      }
+    }
+  }
+
+  let minerals: Array<{ id: string; name: string; createdAt: string }> = []
+  if (newSpecimen.mineral_ids && newSpecimen.mineral_ids.length > 0) {
+    const { data: mineralsData } = await supabase
+      .from("minerals")
+      .select("id, name, created_at")
+      .in("id", newSpecimen.mineral_ids)
+
+    if (mineralsData) {
+      // Preserve order from mineral_ids
+      const mineralsMap = mineralsData.reduce(
+        (acc, m) => {
+          acc[m.id] = { id: m.id, name: m.name, createdAt: m.created_at }
+          return acc
+        },
+        {} as Record<string, { id: string; name: string; createdAt: string }>
+      )
+      minerals = newSpecimen.mineral_ids.map((id: string) => mineralsMap[id]).filter(Boolean)
+    }
+  }
+
   const transformedSpecimen = {
     id: newSpecimen.id,
-    name: newSpecimen.name,
-    type: newSpecimen.type,
     imageUrl: newSpecimen.image_url,
-    dateAdded: newSpecimen.acquisition_date || newSpecimen.created_at.split("T")[0],
-    location: newSpecimen.location,
-    description: newSpecimen.description,
-    coordinates:
-      newSpecimen.latitude && newSpecimen.longitude
-        ? { lat: newSpecimen.latitude, lng: newSpecimen.longitude }
-        : undefined,
-    tags: newSpecimen.tags || [],
-    details: {
-      hardness: newSpecimen.hardness?.toString(),
-      composition: newSpecimen.composition,
-      color: newSpecimen.color,
-      luster: newSpecimen.luster,
-      weight: newSpecimen.weight?.toString(),
-      dimensions: newSpecimen.dimensions,
-    },
+    createdAt: newSpecimen.created_at,
+    localityId: newSpecimen.locality_id,
+    mineralIds: newSpecimen.mineral_ids || [],
+    length: newSpecimen.length,
+    width: newSpecimen.width,
+    height: newSpecimen.height,
+    locality,
+    minerals,
   }
 
   return NextResponse.json({ specimen: transformedSpecimen })
@@ -138,22 +288,25 @@ export async function PUT(request: Request) {
     .eq("user_id", user.id)
     .single()
 
-  const specimenData = {
-    name: body.name,
-    type: body.type,
-    location: body.location,
-    description: body.description,
-    hardness: body.details?.hardness ? Number.parseFloat(body.details.hardness) : null,
-    luster: body.details?.luster,
-    color: body.details?.color,
-    composition: body.details?.composition,
-    weight: body.details?.weight ? Number.parseFloat(body.details.weight) : null,
-    dimensions: body.details?.dimensions,
-    image_url: body.imageUrl,
-    acquisition_date: body.dateAdded || null,
-    latitude: body.coordinates?.lat || null,
-    longitude: body.coordinates?.lng || null,
-    tags: body.tags || [],
+  const specimenData: Record<string, unknown> = {}
+
+  if (body.imageUrl !== undefined) {
+    specimenData.image_url = body.imageUrl || null
+  }
+  if (body.localityId !== undefined) {
+    specimenData.locality_id = body.localityId || null
+  }
+  if (body.mineralIds !== undefined) {
+    specimenData.mineral_ids = body.mineralIds || []
+  }
+  if (body.length !== undefined) {
+    specimenData.length = body.length ?? null
+  }
+  if (body.width !== undefined) {
+    specimenData.width = body.width ?? null
+  }
+  if (body.height !== undefined) {
+    specimenData.height = body.height ?? null
   }
 
   const { data: updatedSpecimen, error } = await supabase
@@ -174,31 +327,65 @@ export async function PUT(request: Request) {
       await deleteFromS3(existingSpecimen.image_url)
     } catch (err) {
       console.error("Failed to delete old image from S3:", err)
-      // Continue even if deletion fails - don't block the update
+    }
+  }
+
+  // Fetch related data for response
+  let locality = null
+  if (updatedSpecimen.locality_id) {
+    const { data: localityData } = await supabase
+      .from("localities")
+      .select("*")
+      .eq("id", updatedSpecimen.locality_id)
+      .single()
+
+    if (localityData) {
+      const ancestors = await getAncestors(supabase, localityData.parent_id)
+      const pathParts = [localityData.name, ...ancestors.map((a) => a.name)]
+      locality = {
+        id: localityData.id,
+        name: localityData.name,
+        latitude: localityData.latitude,
+        longitude: localityData.longitude,
+        kind: localityData.kind,
+        parentId: localityData.parent_id,
+        createdAt: localityData.created_at,
+        ancestors,
+        fullPath: pathParts.join(", "),
+      }
+    }
+  }
+
+  let minerals: Array<{ id: string; name: string; createdAt: string }> = []
+  if (updatedSpecimen.mineral_ids && updatedSpecimen.mineral_ids.length > 0) {
+    const { data: mineralsData } = await supabase
+      .from("minerals")
+      .select("id, name, created_at")
+      .in("id", updatedSpecimen.mineral_ids)
+
+    if (mineralsData) {
+      const mineralsMap = mineralsData.reduce(
+        (acc, m) => {
+          acc[m.id] = { id: m.id, name: m.name, createdAt: m.created_at }
+          return acc
+        },
+        {} as Record<string, { id: string; name: string; createdAt: string }>
+      )
+      minerals = updatedSpecimen.mineral_ids.map((id: string) => mineralsMap[id]).filter(Boolean)
     }
   }
 
   const transformedSpecimen = {
     id: updatedSpecimen.id,
-    name: updatedSpecimen.name,
-    type: updatedSpecimen.type,
     imageUrl: updatedSpecimen.image_url,
-    dateAdded: updatedSpecimen.acquisition_date || updatedSpecimen.created_at.split("T")[0],
-    location: updatedSpecimen.location,
-    description: updatedSpecimen.description,
-    coordinates:
-      updatedSpecimen.latitude && updatedSpecimen.longitude
-        ? { lat: updatedSpecimen.latitude, lng: updatedSpecimen.longitude }
-        : undefined,
-    tags: updatedSpecimen.tags || [],
-    details: {
-      hardness: updatedSpecimen.hardness?.toString(),
-      composition: updatedSpecimen.composition,
-      color: updatedSpecimen.color,
-      luster: updatedSpecimen.luster,
-      weight: updatedSpecimen.weight?.toString(),
-      dimensions: updatedSpecimen.dimensions,
-    },
+    createdAt: updatedSpecimen.created_at,
+    localityId: updatedSpecimen.locality_id,
+    mineralIds: updatedSpecimen.mineral_ids || [],
+    length: updatedSpecimen.length,
+    width: updatedSpecimen.width,
+    height: updatedSpecimen.height,
+    locality,
+    minerals,
   }
 
   return NextResponse.json({ specimen: transformedSpecimen })
@@ -243,7 +430,6 @@ export async function DELETE(request: Request) {
       await deleteFromS3(specimen.image_url)
     } catch (err) {
       console.error("Failed to delete image from S3:", err)
-      // Continue even if deletion fails - the specimen is already deleted
     }
   }
 
