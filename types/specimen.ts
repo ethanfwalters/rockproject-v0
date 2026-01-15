@@ -1,4 +1,4 @@
-import type { Locality } from "./locality"
+import type { Locality, LocalityWithAncestors } from "./locality"
 import type { Mineral } from "./mineral"
 
 export type Specimen = {
@@ -11,7 +11,7 @@ export type Specimen = {
   width?: number // in mm
   height?: number // in mm
   // Populated relations (for display)
-  locality?: Locality
+  locality?: LocalityWithAncestors
   minerals?: Mineral[]
 }
 

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
-import { X, MapPin, Calendar, Pencil, Trash2, Gem, Ruler } from "lucide-react"
+import { X, MapPin, Calendar, Pencil, Trash2, Gem, Ruler, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import { EditSpecimenForm } from "../../specimenEdit/presentation/edit-specimen-form"
 import { CollectionMap } from "../../collection/presentation/collection-map"
 import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
@@ -171,17 +172,27 @@ export function SpecimenDetail({
             <div className="space-y-6">
               {/* Minerals */}
               <div>
-                <h1 className="text-4xl font-bold text-balance">{displayName}</h1>
+                {specimen.minerals && specimen.minerals.length > 0 ? (
+                  <Link
+                    href={`/mineral/${specimen.minerals[0].id}`}
+                    className="text-4xl font-bold text-balance hover:text-primary transition-colors"
+                  >
+                    {displayName}
+                  </Link>
+                ) : (
+                  <h1 className="text-4xl font-bold text-balance">{displayName}</h1>
+                )}
                 {specimen.minerals && specimen.minerals.length > 1 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {specimen.minerals.slice(1).map((mineral, index) => (
-                      <span
+                      <Link
                         key={mineral.id}
-                        className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+                        href={`/mineral/${mineral.id}`}
+                        className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
                       >
                         {index === 0 ? "Secondary: " : ""}
                         {mineral.name}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -219,7 +230,14 @@ export function SpecimenDetail({
                                   ? "Tertiary"
                                   : `${index + 1}th`}
                           </span>
-                          <span className="font-medium">{mineral.name}</span>
+                          <Link
+                            href={`/mineral/${mineral.id}`}
+                            className="font-medium hover:text-primary hover:underline transition-colors flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {mineral.name}
+                            <ExternalLink className="h-3 w-3 opacity-50" />
+                          </Link>
                         </div>
                       ))}
                     </div>
