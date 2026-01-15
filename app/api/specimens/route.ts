@@ -1,16 +1,17 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { deleteFromS3 } from "@/lib/s3/upload"
+import {Locality} from "@/types/locality";
 
 async function getAncestors(
   supabase: Awaited<ReturnType<typeof createClient>>,
   parentId: string | null
-): Promise<Array<{ id: string; name: string; kind: string; parentId: string | null }>> {
+): Promise<Array<Locality>> {
   if (!parentId) return []
 
   const { data: parent, error } = await supabase
     .from("localities")
-    .select("id, name, kind, parent_id")
+    .select("id, name, kind, parent_id, created_at" )
     .eq("id", parentId)
     .single()
 
@@ -24,6 +25,7 @@ async function getAncestors(
       name: parent.name,
       kind: parent.kind,
       parentId: parent.parent_id,
+      createdAt: parent.created_at,
     },
     ...ancestors,
   ]
@@ -103,7 +105,7 @@ export async function GET() {
   }
 
   // Fetch ancestors for all localities that have parents
-  const localityAncestorsMap: Record<string, { ancestors: typeof ancestors; fullPath: string }> = {}
+  const localityAncestorsMap: Record<string, { ancestors: Locality; fullPath: string }> = {}
   for (const spec of specimens) {
     const locality = spec.localities as {
       id: string

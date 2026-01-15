@@ -12,6 +12,7 @@ import {
   createLocality,
 } from "@/features/shared/application/client/localitiesCrud"
 import type { Locality, LocalityWithAncestors } from "@/types/locality"
+import {useEffect} from "react";
 
 interface LocalityPickerProps {
   value?: string
@@ -118,6 +119,7 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
     try {
       const children = await fetchLocalities({ parentId: locality.id })
       setCurrentLocalities(children)
+      setSearch('')
     } catch (error) {
       console.error("Failed to fetch children:", error)
     } finally {
@@ -178,7 +180,7 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
       setCurrentLocalities((prev) =>
         [...prev, newLocality].sort((a, b) => a.name.localeCompare(b.name))
       )
-      handleSelectLocality(newLocality)
+      // handleSelectLocality(newLocality)
       setShowAddForm(false)
       setAddFormData({ name: "", kind: "", latitude: "", longitude: "" })
     } catch (error) {
@@ -236,7 +238,7 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
           </div>
 
           {/* Breadcrumb */}
-          {!search && breadcrumb.length > 0 && (
+          {search && breadcrumb.length > 0 && (
             <div className="flex items-center gap-1 border-b px-3 py-2 text-sm">
               <button
                 type="button"
@@ -364,7 +366,6 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
                         <div className="font-medium">{locality.name}</div>
                         <div className="text-xs text-muted-foreground">{locality.kind}</div>
                       </button>
-                      {!search && (
                         <Button
                           type="button"
                           variant="ghost"
@@ -374,7 +375,6 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>
-                      )}
                     </div>
                   ))
                 )}
