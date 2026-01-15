@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, MapPin, Plus, Search, X } from "lucide-react"
+import { ArrowLeft, Check, ChevronRight, MapPin, Plus, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "./input"
 import { Button } from "./button"
@@ -12,7 +12,6 @@ import {
   createLocality,
 } from "@/features/shared/application/client/localitiesCrud"
 import type { Locality, LocalityWithAncestors } from "@/types/locality"
-import {useEffect} from "react";
 
 interface LocalityPickerProps {
   value?: string
@@ -223,6 +222,43 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
       {/* Dropdown */}
       {isOpen && (
         <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md">
+          {/* Navigation header with breadcrumb and back button */}
+          {breadcrumb.length > 0 && (
+            <div className="flex items-center gap-1 border-b px-2 py-2 text-sm">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => handleBreadcrumbClick(breadcrumb.length - 2)}
+                title="Go back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => handleBreadcrumbClick(-1)}
+              >
+                Countries
+              </button>
+              {breadcrumb.map((loc, index) => (
+                <React.Fragment key={loc.id}>
+                  <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <button
+                    type="button"
+                    className={cn(
+                      "hover:text-foreground truncate",
+                      index === breadcrumb.length - 1 ? "font-medium" : "text-muted-foreground"
+                    )}
+                    onClick={() => handleBreadcrumbClick(index)}
+                  >
+                    {loc.name}
+                  </button>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
           {/* Search */}
           <div className="border-b p-2">
             <div className="relative">
@@ -236,34 +272,6 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
               />
             </div>
           </div>
-
-          {/* Breadcrumb */}
-          {search && breadcrumb.length > 0 && (
-            <div className="flex items-center gap-1 border-b px-3 py-2 text-sm">
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => handleBreadcrumbClick(-1)}
-              >
-                Countries
-              </button>
-              {breadcrumb.map((loc, index) => (
-                <React.Fragment key={loc.id}>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  <button
-                    type="button"
-                    className={cn(
-                      "hover:text-foreground",
-                      index === breadcrumb.length - 1 ? "font-medium" : "text-muted-foreground"
-                    )}
-                    onClick={() => handleBreadcrumbClick(index)}
-                  >
-                    {loc.name}
-                  </button>
-                </React.Fragment>
-              ))}
-            </div>
-          )}
 
           {/* Add form */}
           {showAddForm ? (
@@ -344,37 +352,67 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
             </div>
           ) : (
             <>
+              {/* Select current location option */}
+              {breadcrumb.length > 0 && !search && (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 border-b bg-accent/50 px-3 py-2 text-left hover:bg-accent"
+                  onClick={() => handleSelectLocality(breadcrumb[breadcrumb.length - 1])}
+                >
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm">Use {breadcrumb[breadcrumb.length - 1].name}</div>
+                    <div className="text-xs text-muted-foreground">{breadcrumb[breadcrumb.length - 1].kind}</div>
+                  </div>
+                  <Check className="h-4 w-4 text-primary" />
+                </button>
+              )}
+
               {/* Localities list */}
               <div className="max-h-60 overflow-auto">
                 {isLoading ? (
                   <div className="p-3 text-center text-sm text-muted-foreground">Loading...</div>
                 ) : currentLocalities.length === 0 ? (
-                  <div className="p-3 text-center text-sm text-muted-foreground">
-                    No localities found
+                  <div className="p-4 text-center">
+                    <div className="text-sm text-muted-foreground mb-3">
+                      No sub-localities found
+                    </div>
+                    {breadcrumb.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBreadcrumbClick(breadcrumb.length - 2)}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Go back
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   currentLocalities.map((locality) => (
                     <div
                       key={locality.id}
-                      className="flex items-center hover:bg-accent"
+                      className="flex items-center gap-2 px-2 py-1 hover:bg-accent cursor-pointer"
+                      onClick={() => handleDrillDown(locality)}
                     >
-                      <button
+                      <Button
                         type="button"
-                        className="flex-1 px-3 py-2 text-left text-sm"
-                        onClick={() => handleSelectLocality(locality)}
+                        variant="ghost"
+                        size="icon-sm"
+                        title="Select this locality"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSelectLocality(locality)
+                        }}
                       >
-                        <div className="font-medium">{locality.name}</div>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{locality.name}</div>
                         <div className="text-xs text-muted-foreground">{locality.kind}</div>
-                      </button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="mr-1"
-                          onClick={() => handleDrillDown(locality)}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     </div>
                   ))
                 )}

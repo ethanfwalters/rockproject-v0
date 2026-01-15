@@ -224,8 +224,8 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                     )}
                   </div>
                   {specimen.locality && (
-                    <p className="text-sm text-muted-foreground">
-                      {specimen.locality.name}
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {specimen.locality.fullPath || specimen.locality.name}
                     </p>
                   )}
                   {formatDimensions(specimen.length, specimen.width, specimen.height) && (
@@ -332,8 +332,8 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                           <span className="text-sm text-muted-foreground">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {specimen.locality?.name || "-"}
+                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate" title={specimen.locality?.fullPath || specimen.locality?.name}>
+                        {specimen.locality?.fullPath || specimen.locality?.name || "-"}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {formatDimensions(specimen.length, specimen.width, specimen.height) || "-"}
