@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
-import { X, MapPin, Calendar, Pencil, Trash2, Gem, Ruler, ExternalLink } from "lucide-react"
+import { X, MapPin, Calendar, Pencil, Trash2, Gem, Ruler, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { EditSpecimenForm } from "../../specimenEdit/presentation/edit-specimen-form"
 import { CollectionMap } from "../../collection/presentation/collection-map"
@@ -217,11 +217,19 @@ export function SpecimenDetail({
                     <Gem className="h-4 w-4 text-muted-foreground" />
                     <h2 className="text-sm font-medium text-muted-foreground">Minerals</h2>
                   </div>
-                  <Card className="border-0 bg-muted/50 p-4">
-                    <div className="space-y-2">
-                      {specimen.minerals.map((mineral, index) => (
-                        <div key={mineral.id} className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-16">
+                  <div className="space-y-2">
+                    {specimen.minerals.map((mineral, index) => (
+                      <Link
+                        key={mineral.id}
+                        href={`/mineral/${mineral.id}`}
+                        className="group flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div>
+                          <p className="font-medium group-hover:text-primary transition-colors">
+                            {mineral.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
                             {index === 0
                               ? "Primary"
                               : index === 1
@@ -229,19 +237,12 @@ export function SpecimenDetail({
                                 : index === 2
                                   ? "Tertiary"
                                   : `${index + 1}th`}
-                          </span>
-                          <Link
-                            href={`/mineral/${mineral.id}`}
-                            className="font-medium hover:text-primary hover:underline transition-colors flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {mineral.name}
-                            <ExternalLink className="h-3 w-3 opacity-50" />
-                          </Link>
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  </Card>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               )}
 
