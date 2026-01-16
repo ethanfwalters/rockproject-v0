@@ -106,9 +106,9 @@ export async function GET() {
   }
 
   // Fetch ancestors for all localities that have parents
-  const localityAncestorsMap: Record<string, { ancestors: Locality; fullPath: string }> = {}
+  const localityAncestorsMap: Record<string, { ancestors: Locality[]; fullPath: string }> = {}
   for (const spec of specimens) {
-    const locality = spec.localities as {
+    const locality = spec.localities as unknown as {
       id: string
       name: string
       latitude: number | null
@@ -130,7 +130,7 @@ export async function GET() {
 
   // Transform specimens
   const transformedSpecimens = specimens.map((spec) => {
-    const locality = spec.localities as {
+    const locality = spec.localities as unknown as {
       id: string
       name: string
       latitude: number | null

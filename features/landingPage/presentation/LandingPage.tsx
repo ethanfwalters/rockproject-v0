@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Specimen } from "@/types/specimen"
+import type { Specimen, CreateSpecimenInput, UpdateSpecimenInput } from "@/types/specimen"
 import { CollectionOverview } from "@/features/collection/presentation/collection-overview"
 import { AddSpecimenFlow } from "@/features/specimenAdd/presentation/add-specimen-flow"
 import { SpecimenDetail } from "@/features/specimenDetail/presentation/specimen-detail"
@@ -66,11 +66,11 @@ export default function LandingPage() {
         },
     })
 
-    const handleAddSpecimen = (specimen: Omit<Specimen, "id" | "dateAdded">) => {
+    const handleAddSpecimen = (specimen: CreateSpecimenInput) => {
         addSpecimenMutation.mutate(specimen)
     }
 
-    const handleUpdateSpecimen = (specimen: Specimen) => {
+    const handleUpdateSpecimen = (specimen: UpdateSpecimenInput) => {
         updateSpecimenMutation.mutate(specimen)
     }
 
