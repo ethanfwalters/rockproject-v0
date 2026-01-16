@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Specimen, CreateSpecimenInput, UpdateSpecimenInput } from "@/types/specimen"
 import { CollectionOverview } from "@/features/collection/presentation/collection-overview"
@@ -22,6 +22,7 @@ export default function LandingPage() {
     const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
     const [userEmail, setUserEmail] = useState<string>("")
     const router = useRouter()
+    const searchParams = useSearchParams()
     const queryClient = useQueryClient()
 
     useEffect(() => {
@@ -41,6 +42,19 @@ export default function LandingPage() {
         queryKey: ["specimens"],
         queryFn: fetchSpecimens,
     })
+
+    // Open specimen from URL query parameter
+    useEffect(() => {
+        const specimenId = searchParams.get("specimen")
+        if (specimenId && specimens.length > 0 && !selectedSpecimen) {
+            const specimen = specimens.find((s) => s.id === specimenId)
+            if (specimen) {
+                setSelectedSpecimen(specimen)
+                // Clear the query parameter from URL
+                router.replace("/", { scroll: false })
+            }
+        }
+    }, [searchParams, specimens, selectedSpecimen, router])
 
     const addSpecimenMutation = useMutation({
         mutationFn: addSpecimen,

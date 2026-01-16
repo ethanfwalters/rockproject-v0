@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import Image from "next/image"
 import type { Mineral } from "@/types/mineral"
+import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
-import { ArrowLeft, Gem } from "lucide-react"
+import { SpecimenDetail } from "@/features/specimenDetail/presentation/specimen-detail"
+import { ArrowLeft, ImageIcon } from "lucide-react"
+import {
+  fetchSpecimens,
+  updateSpecimen,
+  deleteSpecimen,
+} from "@/features/landingPage/application/client/specimenCrud"
 
 interface SpecimenPreview {
   id: string
@@ -28,6 +34,9 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
   const [specimens, setSpecimens] = useState<SpecimenPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     async function fetchMineral() {
@@ -53,6 +62,43 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
 
     fetchMineral()
   }, [mineralId])
+
+  const handleSpecimenClick = async (specimenId: string) => {
+    // Fetch the full specimen data from user's collection
+    const allSpecimens = await fetchSpecimens()
+    const specimen = allSpecimens.find((s) => s.id === specimenId)
+    if (specimen) {
+      setSelectedSpecimen(specimen)
+    }
+  }
+
+  const handleUpdateSpecimen = async (updated: UpdateSpecimenInput) => {
+    setIsUpdating(true)
+    try {
+      const updatedSpecimen = await updateSpecimen(updated)
+      setSelectedSpecimen(updatedSpecimen)
+      // Refresh the mineral page data
+      const response = await fetch(`/api/minerals/${mineralId}`)
+      const data = await response.json()
+      setSpecimens(data.specimens || [])
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleDeleteSpecimen = async (id: string) => {
+    setIsDeleting(true)
+    try {
+      await deleteSpecimen(id)
+      setSelectedSpecimen(null)
+      // Refresh the mineral page data
+      const response = await fetch(`/api/minerals/${mineralId}`)
+      const data = await response.json()
+      setSpecimens(data.specimens || [])
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -92,21 +138,33 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
           Back
         </Button>
 
-        <Card className="border-0 bg-card p-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <Gem className="h-8 w-8 text-primary" />
+        <Card className="border-0 bg-card overflow-hidden">
+          <div className="grid md:grid-cols-[280px_1fr] gap-0">
+            {/* Image Area */}
+            <div className="relative aspect-square md:aspect-auto md:h-full min-h-[280px] bg-gradient-to-br from-violet-500/5 via-muted to-indigo-500/5">
+              <div className="absolute inset-0 flex items-center justify-center p-8">
+                <img
+                  src="/mineral-placeholder.svg"
+                  alt=""
+                  className="w-full h-full max-w-[200px] max-h-[200px] opacity-90"
+                />
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">{mineral.name}</h1>
-              <p className="text-sm text-muted-foreground">Mineral</p>
-            </div>
-          </div>
 
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-sm font-medium text-muted-foreground mb-2">Name</h2>
-              <p className="text-lg">{mineral.name}</p>
+            {/* Info Area */}
+            <div className="p-6 md:p-8">
+              <div className="mb-1">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Mineral</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold mb-6">{mineral.name}</h1>
+
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="text-sm text-muted-foreground">
+                    More information about this mineral will be available soon.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </Card>
@@ -120,15 +178,15 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
           {specimens.length === 0 ? (
             <Card className="border-0 bg-card p-8">
               <div className="text-center text-muted-foreground">
-                <Gem className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                <p>No specimens with this mineral yet.</p>
+                <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p>No public specimens with this mineral yet.</p>
               </div>
             </Card>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {specimens.map((specimen) => (
-                <Link key={specimen.id} href="/" className="block">
-                  <Card className="border-0 bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+              {specimens.map((specimen) => {
+                const CardContent = (
+                  <Card className={`border-0 bg-card overflow-hidden transition-shadow ${specimen.isOwn ? "hover:shadow-lg cursor-pointer" : ""}`}>
                     <div className="relative aspect-square bg-muted">
                       {specimen.imageUrl ? (
                         <Image
@@ -139,7 +197,7 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center">
-                          <Gem className="h-12 w-12 opacity-20" />
+                          <ImageIcon className="h-12 w-12 opacity-20" />
                         </div>
                       )}
                       {specimen.isOwn && (
@@ -162,12 +220,36 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
                       </p>
                     </div>
                   </Card>
-                </Link>
-              ))}
+                )
+
+                return specimen.isOwn ? (
+                  <div
+                    key={specimen.id}
+                    onClick={() => handleSpecimenClick(specimen.id)}
+                    className="block"
+                  >
+                    {CardContent}
+                  </div>
+                ) : (
+                  <div key={specimen.id}>{CardContent}</div>
+                )
+              })}
             </div>
           )}
         </div>
       </div>
+
+      {/* Specimen Detail Modal */}
+      {selectedSpecimen && (
+        <SpecimenDetail
+          specimen={selectedSpecimen}
+          onClose={() => setSelectedSpecimen(null)}
+          onUpdate={handleUpdateSpecimen}
+          onDelete={handleDeleteSpecimen}
+          isUpdating={isUpdating}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   )
 }
