@@ -1,15 +1,14 @@
 "use client"
 
 import type React from "react"
-
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/features/shared/presentation/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/features/shared/presentation/card"
 import { Input } from "@/features/shared/presentation/input"
 import { Label } from "@/features/shared/presentation/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { Navbar } from "@/features/navbar/presentation/navbar"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -49,70 +48,74 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center p-6 bg-gradient-to-br from-background to-muted/20">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col gap-6">
-          <div className="text-center mb-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Rock Collection
-            </h1>
-            <p className="text-muted-foreground mt-1">Track your specimens</p>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Create an account</h1>
+            <p className="text-muted-foreground mt-2">
+              Start tracking your rock, mineral, and fossil collection
+            </p>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Sign up</CardTitle>
-              <CardDescription>Create a new account</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSignUp}>
-                <div className="flex flex-col gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="repeat-password">Repeat Password</Label>
-                    <Input
-                      id="repeat-password"
-                      type="password"
-                      required
-                      value={repeatPassword}
-                      onChange={(e) => setRepeatPassword(e.target.value)}
-                    />
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Sign up"}
-                  </Button>
-                </div>
-                <div className="mt-4 text-center text-sm">
-                  {"Already have an account? "}
-                  <Link href="/auth/login" className="underline underline-offset-4 text-primary">
-                    Login
-                  </Link>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+
+          <form onSubmit={handleSignUp} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="repeat-password">Confirm password</Label>
+              <Input
+                id="repeat-password"
+                type="password"
+                required
+                value={repeatPassword}
+                onChange={(e) => setRepeatPassword(e.target.value)}
+                className="h-11"
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
+
+            <Button type="submit" className="w-full h-11 rounded-xl" disabled={isLoading}>
+              {isLoading ? "Creating account..." : "Create account"}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
         </div>
-      </div>
+      </main>
     </div>
   )
 }
