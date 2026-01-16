@@ -10,6 +10,7 @@ export type Specimen = {
   length?: number // in mm
   width?: number // in mm
   height?: number // in mm
+  isPublic: boolean // Whether this specimen is visible to other users
   // Populated relations (for display)
   locality?: LocalityWithAncestors
   minerals?: Mineral[]
@@ -27,6 +28,7 @@ export type CreateSpecimenInput = {
   length?: number
   width?: number
   height?: number
+  isPublic?: boolean
 }
 
 export type UpdateSpecimenInput = Partial<CreateSpecimenInput> & {

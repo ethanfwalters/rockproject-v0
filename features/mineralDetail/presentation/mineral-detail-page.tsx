@@ -2,10 +2,21 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
 import type { Mineral } from "@/types/mineral"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
 import { ArrowLeft, Gem } from "lucide-react"
+
+interface SpecimenPreview {
+  id: string
+  imageUrl: string | null
+  createdAt: string
+  minerals: Array<{ id: string; name: string }>
+  isPublic: boolean
+  isOwn: boolean
+}
 
 interface MineralDetailPageProps {
   mineralId: string
@@ -14,6 +25,7 @@ interface MineralDetailPageProps {
 export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
   const router = useRouter()
   const [mineral, setMineral] = useState<Mineral | null>(null)
+  const [specimens, setSpecimens] = useState<SpecimenPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,6 +43,7 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
         }
         const data = await response.json()
         setMineral(data.mineral)
+        setSpecimens(data.specimens || [])
       } catch {
         setError("Failed to load mineral")
       } finally {
@@ -95,14 +108,65 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
               <h2 className="text-sm font-medium text-muted-foreground mb-2">Name</h2>
               <p className="text-lg">{mineral.name}</p>
             </div>
-
-            <div className="pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                More mineral information coming soon...
-              </p>
-            </div>
           </div>
         </Card>
+
+        {/* Specimens Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">
+            Specimens with {mineral.name}
+          </h2>
+
+          {specimens.length === 0 ? (
+            <Card className="border-0 bg-card p-8">
+              <div className="text-center text-muted-foreground">
+                <Gem className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p>No specimens with this mineral yet.</p>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {specimens.map((specimen) => (
+                <Link key={specimen.id} href="/" className="block">
+                  <Card className="border-0 bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="relative aspect-square bg-muted">
+                      {specimen.imageUrl ? (
+                        <Image
+                          src={specimen.imageUrl}
+                          alt={specimen.minerals[0]?.name || "Specimen"}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Gem className="h-12 w-12 opacity-20" />
+                        </div>
+                      )}
+                      {specimen.isOwn && (
+                        <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          Yours
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="font-medium truncate">
+                        {specimen.minerals[0]?.name || "Unknown"}
+                      </p>
+                      {specimen.minerals.length > 1 && (
+                        <p className="text-xs text-muted-foreground">
+                          +{specimen.minerals.length - 1} more mineral{specimen.minerals.length > 2 ? "s" : ""}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Added {new Date(specimen.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

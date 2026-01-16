@@ -10,7 +10,8 @@ import { ImageUpload } from "@/features/shared/presentation/image-upload"
 import { MineralMultiSelect } from "@/features/shared/presentation/mineral-multi-select"
 import { LocalityPicker } from "@/features/shared/presentation/locality-picker"
 import { DimensionsInput } from "@/features/shared/presentation/dimensions-input"
-import { X, Save } from "lucide-react"
+import { Switch } from "@/features/shared/presentation/switch"
+import { X, Save, Globe, Lock } from "lucide-react"
 import { fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
 
 interface EditSpecimenFormProps {
@@ -29,6 +30,7 @@ export function EditSpecimenForm({ specimen, onSave, onCancel, isSaving }: EditS
     length: specimen.length,
     width: specimen.width,
     height: specimen.height,
+    isPublic: specimen.isPublic ?? false,
   })
   const [minerals, setMinerals] = useState<Mineral[]>([])
 
@@ -102,6 +104,34 @@ export function EditSpecimenForm({ specimen, onSave, onCancel, isSaving }: EditS
               })
             }
           />
+        </div>
+
+        {/* Public Visibility */}
+        <div className="space-y-2">
+          <Label>Visibility</Label>
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex items-center gap-3">
+              {formData.isPublic ? (
+                <Globe className="h-5 w-5 text-primary" />
+              ) : (
+                <Lock className="h-5 w-5 text-muted-foreground" />
+              )}
+              <div>
+                <p className="font-medium">
+                  {formData.isPublic ? "Public" : "Private"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {formData.isPublic
+                    ? "Other users can see this specimen"
+                    : "Only you can see this specimen"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={formData.isPublic}
+              onCheckedChange={(checked) => setFormData({ ...formData, isPublic: checked })}
+            />
+          </div>
         </div>
       </div>
 

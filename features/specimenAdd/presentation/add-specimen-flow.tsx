@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import type { CreateSpecimenInput } from "@/types/specimen"
 import type { Mineral } from "@/types/mineral"
 import { Button } from "@/features/shared/presentation/button"
-import { X, ChevronRight, ChevronLeft, MapPin, Image as ImageIcon, Gem, Ruler } from "lucide-react"
+import { Switch } from "@/features/shared/presentation/switch"
+import { X, ChevronRight, ChevronLeft, MapPin, Image as ImageIcon, Gem, Ruler, Globe, Lock } from "lucide-react"
 import { Card } from "@/features/shared/presentation/card"
 import { ImageUpload } from "@/features/shared/presentation/image-upload"
 import { MineralMultiSelect } from "@/features/shared/presentation/mineral-multi-select"
@@ -29,6 +30,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
     length: undefined,
     width: undefined,
     height: undefined,
+    isPublic: false,
   })
   const [minerals, setMinerals] = useState<Mineral[]>([])
   const [localityName, setLocalityName] = useState<string>("")
@@ -328,6 +330,31 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
                 >
                   Edit
                 </Button>
+              </div>
+
+              {/* Visibility Toggle */}
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center gap-3">
+                  {formData.isPublic ? (
+                    <Globe className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Lock className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <div>
+                    <p className="font-medium">
+                      {formData.isPublic ? "Public" : "Private"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formData.isPublic
+                        ? "Other users can see this specimen"
+                        : "Only you can see this specimen"}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={formData.isPublic ?? false}
+                  onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isPublic: checked }))}
+                />
               </div>
 
               <div className="flex justify-between gap-3 pt-4">

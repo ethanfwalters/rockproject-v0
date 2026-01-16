@@ -57,6 +57,7 @@ export async function GET() {
       length,
       width,
       height,
+      is_public,
       localities (
         id,
         name,
@@ -164,6 +165,7 @@ export async function GET() {
       length: spec.length,
       width: spec.width,
       height: spec.height,
+      isPublic: spec.is_public ?? false,
       locality: localityData,
       minerals,
     }
@@ -194,6 +196,7 @@ export async function POST(request: Request) {
     length: body.length ?? null,
     width: body.width ?? null,
     height: body.height ?? null,
+    is_public: body.isPublic ?? false,
   }
 
   const { data: newSpecimen, error } = await supabase.from("specimens").insert(specimenData).select().single()
@@ -257,6 +260,7 @@ export async function POST(request: Request) {
     length: newSpecimen.length,
     width: newSpecimen.width,
     height: newSpecimen.height,
+    isPublic: newSpecimen.is_public ?? false,
     locality,
     minerals,
   }
@@ -309,6 +313,9 @@ export async function PUT(request: Request) {
   }
   if (body.height !== undefined) {
     specimenData.height = body.height ?? null
+  }
+  if (body.isPublic !== undefined) {
+    specimenData.is_public = body.isPublic
   }
 
   const { data: updatedSpecimen, error } = await supabase
@@ -386,6 +393,7 @@ export async function PUT(request: Request) {
     length: updatedSpecimen.length,
     width: updatedSpecimen.width,
     height: updatedSpecimen.height,
+    isPublic: updatedSpecimen.is_public ?? false,
     locality,
     minerals,
   }
