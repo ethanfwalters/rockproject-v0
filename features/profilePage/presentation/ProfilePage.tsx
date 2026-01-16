@@ -76,7 +76,7 @@ export default function ProfilePage() {
         <div className="min-h-screen bg-background">
             <Navbar />
             <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-                <Button variant="ghost" onClick={() => router.push("/")} className="mb-6 gap-2 rounded-full">
+                <Button variant="ghost" onClick={() => router.push("/collection")} className="mb-6 gap-2 rounded-full">
                     <ArrowLeft className="h-4 w-4" />
                     Back to Collection
                 </Button>

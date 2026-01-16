@@ -1,10 +1,5 @@
-import { Suspense } from "react"
-import LandingPage from "@/features/landingPage/presentation/LandingPage"
+import { Homepage } from "@/features/homepage/presentation/homepage"
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <LandingPage />
-    </Suspense>
-  )
+  return <Homepage />
 }

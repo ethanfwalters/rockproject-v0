@@ -29,17 +29,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect to login if user is not authenticated and trying to access root
-  if (!user && request.nextUrl.pathname === "/") {
+  // Protected routes that require authentication
+  const protectedRoutes = ["/collection", "/profile", "/mineral"]
+  const isProtectedRoute = protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
+
+  // Redirect to login if user is not authenticated and trying to access protected routes
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
   }
 
-  // Redirect to home if user is authenticated and trying to access auth pages
+  // Redirect to collection if user is authenticated and trying to access auth pages
   if (user && request.nextUrl.pathname.startsWith("/auth")) {
     const url = request.nextUrl.clone()
-    url.pathname = "/"
+    url.pathname = "/collection"
     return NextResponse.redirect(url)
   }
 

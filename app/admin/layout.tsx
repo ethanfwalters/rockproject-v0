@@ -59,7 +59,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </Link>
               </nav>
             </div>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/collection" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Back to App
             </Link>
           </div>

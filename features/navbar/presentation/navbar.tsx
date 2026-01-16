@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Moon, Sun, User, LogOut, ChevronDown } from "lucide-react"
+import Link from "next/link"
+import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import {
   DropdownMenu,
@@ -15,8 +16,9 @@ import { createClient } from "@/lib/supabase/client"
 
 export function Navbar() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
-  const [userEmail, setUserEmail] = useState<string>("")
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
@@ -34,9 +36,8 @@ export function Navbar() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (user) {
-        setUserEmail(user.email || "")
-      }
+      setUserEmail(user?.email || null)
+      setIsLoading(false)
     }
     getUser()
   }, [])
@@ -76,7 +77,7 @@ export function Navbar() {
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <a href={userEmail ? "/" : "/"} className="flex items-center gap-3">
             <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
               <svg
                 viewBox="0 0 24 24"
@@ -93,10 +94,25 @@ export function Navbar() {
               </svg>
             </div>
             <span className="text-xl font-semibold tracking-tight">Terralis</span>
-          </div>
+          </a>
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
+            {/* Collection Icon (authenticated users) */}
+            {!isLoading && userEmail && (
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full hover:bg-accent"
+              >
+                <Link href="/collection">
+                  <LayoutGrid className="h-[1.2rem] w-[1.2rem]" />
+                  <span className="sr-only">Collection</span>
+                </Link>
+              </Button>
+            )}
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -109,44 +125,54 @@ export function Navbar() {
               <span className="sr-only">Toggle theme</span>
             </Button>
 
-            {/* Profile Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 rounded-full pl-1.5 pr-3 hover:bg-accent">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    {userEmail ? (
-                      <span className="text-sm font-medium text-primary">{getInitials(userEmail)}</span>
-                    ) : (
-                      <User className="h-4 w-4 text-primary" />
-                    )}
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-xl p-2">
-                {userEmail && (
-                  <>
+            {!isLoading && (
+              userEmail ? (
+                /* Authenticated: Profile Dropdown */
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 rounded-full pl-1.5 pr-3 hover:bg-accent">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">{getInitials(userEmail)}</span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl p-2">
                     <div className="px-2 py-2">
                       <p className="text-sm font-medium">{userEmail}</p>
                       <p className="text-xs text-muted-foreground">Collector</p>
                     </div>
                     <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={() => router.push("/profile")} className="rounded-lg cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="rounded-lg cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <DropdownMenuItem onClick={() => router.push("/collection")} className="rounded-lg cursor-pointer">
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      Collection
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push("/profile")} className="rounded-lg cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="rounded-lg cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                /* Not authenticated: Login/Signup buttons */
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="ghost">
+                    <Link href="/auth/login">Log in</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/auth/sign-up">Get Started</Link>
+                  </Button>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>

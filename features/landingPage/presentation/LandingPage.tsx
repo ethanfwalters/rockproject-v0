@@ -51,7 +51,7 @@ export default function LandingPage() {
             if (specimen) {
                 setSelectedSpecimen(specimen)
                 // Clear the query parameter from URL
-                router.replace("/", { scroll: false })
+                router.replace("/collection", { scroll: false })
             }
         }
     }, [searchParams, specimens, selectedSpecimen, router])
