@@ -80,6 +80,7 @@ export async function GET(request: Request, segmentData: { params: Params }) {
       id: mineral.id,
       name: mineral.name,
       chemicalFormula: mineral.chemical_formula,
+      isVariety: mineral.is_variety ?? false,
       createdAt: mineral.created_at,
     },
     specimens: transformedSpecimens,

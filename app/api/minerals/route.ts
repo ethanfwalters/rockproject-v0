@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     id: mineral.id,
     name: mineral.name,
     chemicalFormula: mineral.chemical_formula,
+    isVariety: mineral.is_variety ?? false,
     createdAt: mineral.created_at,
   }))
 
@@ -47,12 +48,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Mineral name is required" }, { status: 400 })
   }
 
-  const insertData: { name: string; chemical_formula?: string } = {
+  const insertData: { name: string; chemical_formula?: string; is_variety?: boolean } = {
     name: body.name.trim(),
   }
 
   if (body.chemicalFormula && typeof body.chemicalFormula === "string") {
     insertData.chemical_formula = body.chemicalFormula.trim()
+  }
+
+  if (typeof body.isVariety === "boolean") {
+    insertData.is_variety = body.isVariety
   }
 
   const { data: newMineral, error } = await supabase
@@ -73,6 +78,7 @@ export async function POST(request: Request) {
       id: newMineral.id,
       name: newMineral.name,
       chemicalFormula: newMineral.chemical_formula,
+      isVariety: newMineral.is_variety ?? false,
       createdAt: newMineral.created_at,
     },
   })
