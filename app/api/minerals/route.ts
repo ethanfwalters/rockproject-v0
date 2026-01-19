@@ -22,6 +22,7 @@ export async function GET(request: Request) {
   const transformedMinerals = minerals.map((mineral) => ({
     id: mineral.id,
     name: mineral.name,
+    chemicalFormula: mineral.chemical_formula,
     createdAt: mineral.created_at,
   }))
 
@@ -46,9 +47,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Mineral name is required" }, { status: 400 })
   }
 
+  const insertData: { name: string; chemical_formula?: string } = {
+    name: body.name.trim(),
+  }
+
+  if (body.chemicalFormula && typeof body.chemicalFormula === "string") {
+    insertData.chemical_formula = body.chemicalFormula.trim()
+  }
+
   const { data: newMineral, error } = await supabase
     .from("minerals")
-    .insert({ name: body.name.trim() })
+    .insert(insertData)
     .select()
     .single()
 
@@ -63,6 +72,7 @@ export async function POST(request: Request) {
     mineral: {
       id: newMineral.id,
       name: newMineral.name,
+      chemicalFormula: newMineral.chemical_formula,
       createdAt: newMineral.created_at,
     },
   })

@@ -79,6 +79,7 @@ export async function GET(request: Request, segmentData: { params: Params }) {
     mineral: {
       id: mineral.id,
       name: mineral.name,
+      chemicalFormula: mineral.chemical_formula,
       createdAt: mineral.created_at,
     },
     specimens: transformedSpecimens,

@@ -28,6 +28,59 @@ interface MineralDetailPageProps {
   mineralId: string
 }
 
+function formatChemicalFormula(formula: string): React.ReactNode {
+  const parts: React.ReactNode[] = []
+  let i = 0
+  let key = 0
+
+  while (i < formula.length) {
+    // Check for charge notation like 2+, 3+, 2-, etc. (superscript)
+    if (/^\d+[+-]/.test(formula.slice(i))) {
+      const match = formula.slice(i).match(/^(\d+[+-])/)
+      if (match) {
+        parts.push(<sup key={key++} className="text-[0.65em]">{match[1]}</sup>)
+        i += match[1].length
+        continue
+      }
+    }
+
+    // Check for standalone + or - charge (superscript)
+    if ((formula[i] === '+' || formula[i] === '-') && i > 0 && /[A-Za-z)\]]/.test(formula[i - 1])) {
+      parts.push(<sup key={key++} className="text-[0.65em]">{formula[i]}</sup>)
+      i++
+      continue
+    }
+
+    // Check for numbers that should be subscripts (after letters, parentheses, or brackets)
+    if (/\d/.test(formula[i]) && i > 0 && /[A-Za-z)\]>]/.test(formula[i - 1])) {
+      let numStr = ''
+      while (i < formula.length && /[\d.]/.test(formula[i]) && !/[+-]/.test(formula[i + 1] || '')) {
+        // Check if next char after digits is + or - (then it's a charge, not subscript)
+        if (/\d/.test(formula[i])) {
+          const remaining = formula.slice(i)
+          const chargeMatch = remaining.match(/^(\d+)([+-])/)
+          if (chargeMatch) {
+            // This is a charge like "2+" - don't treat as subscript
+            break
+          }
+        }
+        numStr += formula[i]
+        i++
+      }
+      if (numStr) {
+        parts.push(<sub key={key++} className="text-[0.75em]">{numStr}</sub>)
+        continue
+      }
+    }
+
+    // Regular character
+    parts.push(<span key={key++}>{formula[i]}</span>)
+    i++
+  }
+
+  return parts
+}
+
 export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
   const router = useRouter()
   const [mineral, setMineral] = useState<Mineral | null>(null)
@@ -156,14 +209,27 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
               <div className="mb-1">
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Mineral</span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-6">{mineral.name}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-4">{mineral.name}</h1>
 
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground">
-                    More information about this mineral will be available soon.
+              {mineral.chemicalFormula && (
+                <div className="mb-6">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Chemical Formula
+                  </span>
+                  <p className="text-xl mt-1 font-medium tracking-wide">
+                    {formatChemicalFormula(mineral.chemicalFormula)}
                   </p>
                 </div>
+              )}
+
+              <div className="space-y-4">
+                {!mineral.chemicalFormula && (
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <p className="text-sm text-muted-foreground">
+                      More information about this mineral will be available soon.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

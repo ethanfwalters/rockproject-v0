@@ -26,7 +26,6 @@ export function Navbar() {
   const [searchResults, setSearchResults] = useState<Mineral[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
-  const [allMinerals, setAllMinerals] = useState<Mineral[]>([])
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const mobileSearchRef = useRef<HTMLDivElement>(null)
@@ -62,26 +61,29 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Load all minerals on mount
+  // Search minerals via API with debouncing
   useEffect(() => {
-    fetchMinerals()
-      .then(setAllMinerals)
-      .catch(console.error)
-  }, [])
-
-  // Filter minerals based on search query
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      setIsSearching(true)
-      const filtered = allMinerals.filter((m) =>
-        m.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      setSearchResults(filtered.slice(0, 10))
-      setIsSearching(false)
-    } else {
+    if (!searchQuery.trim()) {
       setSearchResults([])
+      setIsSearching(false)
+      return
     }
-  }, [searchQuery, allMinerals])
+
+    setIsSearching(true)
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const minerals = await fetchMinerals(searchQuery.trim())
+        setSearchResults(minerals.slice(0, 10))
+      } catch (error) {
+        console.error("Search failed:", error)
+        setSearchResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    }, 200)
+
+    return () => clearTimeout(debounceTimer)
+  }, [searchQuery])
 
   // Close search dropdown when clicking outside
   useEffect(() => {
