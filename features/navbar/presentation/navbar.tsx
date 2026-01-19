@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid } from "lucide-react"
-
+import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid, Search, X } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
+import { fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
+import type { Mineral } from "@/types/mineral"
 import {
   Button
 } from "@/features/shared/presentation/button";
@@ -14,12 +15,22 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/features/shared/presentation/dropdown-menu";
+import { Input } from "@/features/shared/presentation/input";
 
 export function Navbar() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<Mineral[]>([])
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const [allMinerals, setAllMinerals] = useState<Mineral[]>([])
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const mobileSearchRef = useRef<HTMLDivElement>(null)
+  const mobileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -50,6 +61,55 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Load all minerals on mount
+  useEffect(() => {
+    fetchMinerals()
+      .then(setAllMinerals)
+      .catch(console.error)
+  }, [])
+
+  // Filter minerals based on search query
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true)
+      const filtered = allMinerals.filter((m) =>
+        m.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      setSearchResults(filtered.slice(0, 10))
+      setIsSearching(false)
+    } else {
+      setSearchResults([])
+    }
+  }, [searchQuery, allMinerals])
+
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false)
+      }
+      if (mobileSearchRef.current && !mobileSearchRef.current.contains(event.target as Node)) {
+        setIsMobileSearchOpen(false)
+        setSearchQuery("")
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Focus mobile input when opened
+  useEffect(() => {
+    if (isMobileSearchOpen && mobileInputRef.current) {
+      mobileInputRef.current.focus()
+    }
+  }, [isMobileSearchOpen])
+
+  const handleMineralSelect = useCallback((mineral: Mineral) => {
+    setSearchQuery("")
+    setIsSearchOpen(false)
+    router.push(`/mineral/${mineral.id}`)
+  }, [router])
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light"
@@ -94,11 +154,80 @@ export function Navbar() {
                   <polyline points="2 12 12 17 22 12" />
                 </svg>
               </div>
-              <span className="text-xl font-semibold tracking-tight">Terralis</span>
+              <span className="text-xl font-semibold tracking-tight hidden sm:inline">Terralis</span>
             </a>
+
+            {/* Search Bar */}
+            <div ref={searchRef} className="relative flex-1 max-w-md mx-4 hidden sm:block">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search minerals..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchOpen(true)}
+                  className="pl-9 pr-9 h-10 bg-muted/50 border-0 focus-visible:ring-1"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("")
+                      setSearchResults([])
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Search Results Dropdown */}
+              {isSearchOpen && searchQuery.trim() && (
+                <div className="absolute top-full left-0 right-0 mt-1 max-h-80 overflow-auto rounded-xl border bg-popover shadow-lg z-50">
+                  {isSearching ? (
+                    <div className="p-3 text-center text-sm text-muted-foreground">
+                      Searching...
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="p-3 text-center text-sm text-muted-foreground">
+                      No minerals found for "{searchQuery}"
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      {searchResults.map((mineral) => (
+                        <button
+                          key={mineral.id}
+                          className="w-full px-4 py-2.5 text-left text-sm hover:bg-accent flex items-center gap-3 transition-colors"
+                          onClick={() => handleMineralSelect(mineral)}
+                        >
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">
+                              {mineral.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="font-medium">{mineral.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-2">
+              {/* Mobile Search Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMobileSearchOpen(true)}
+                className="h-10 w-10 rounded-full hover:bg-accent sm:hidden"
+              >
+                <Search className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Search</span>
+              </Button>
+
               {/* Collection Icon (authenticated users) */}
               {!isLoading && userEmail && (
                   <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full hover:bg-accent">
@@ -174,6 +303,72 @@ export function Navbar() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Overlay */}
+        {isMobileSearchOpen && (
+          <div
+            ref={mobileSearchRef}
+            className="absolute inset-x-0 top-0 bg-background/95 backdrop-blur-xl border-b border-border p-4 sm:hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          >
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                ref={mobileInputRef}
+                type="text"
+                placeholder="Search minerals..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchOpen(true)}
+                className="pl-9 pr-9 h-10"
+              />
+              <button
+                onClick={() => {
+                  setIsMobileSearchOpen(false)
+                  setSearchQuery("")
+                  setSearchResults([])
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Mobile Search Results */}
+            {searchQuery.trim() && (
+              <div className="mt-2 max-h-[60vh] overflow-auto rounded-xl border bg-popover">
+                {isSearching ? (
+                  <div className="p-3 text-center text-sm text-muted-foreground">
+                    Searching...
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-3 text-center text-sm text-muted-foreground">
+                    No minerals found for "{searchQuery}"
+                  </div>
+                ) : (
+                  <div className="py-1">
+                    {searchResults.map((mineral) => (
+                      <button
+                        key={mineral.id}
+                        className="w-full px-4 py-3 text-left text-sm hover:bg-accent flex items-center gap-3 transition-colors"
+                        onClick={() => {
+                          setIsMobileSearchOpen(false)
+                          handleMineralSelect(mineral)
+                        }}
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">
+                            {mineral.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="font-medium">{mineral.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
   )
 }
