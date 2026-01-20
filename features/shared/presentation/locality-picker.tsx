@@ -42,6 +42,7 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
   })
   const [isCreating, setIsCreating] = React.useState(false)
   const containerRef = React.useRef<HTMLDivElement>(null)
+  const hasLoadedRootsRef = React.useRef(false)
 
   // Load selected locality on mount
   React.useEffect(() => {
@@ -54,9 +55,17 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
     }
   }, [value])
 
+  // Reset hasLoadedRoots when dropdown closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      hasLoadedRootsRef.current = false
+    }
+  }, [isOpen])
+
   // Load root localities (countries) when opening
   React.useEffect(() => {
-    if (isOpen && breadcrumb.length === 0 && !search) {
+    if (isOpen && breadcrumb.length === 0 && !search && !hasLoadedRootsRef.current) {
+      hasLoadedRootsRef.current = true
       setIsLoading(true)
       fetchLocalities({ roots: true })
         .then(setCurrentLocalities)
@@ -66,9 +75,13 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
   }, [isOpen, breadcrumb.length, search])
 
   // Search localities
+  const prevSearchRef = React.useRef("")
   React.useEffect(() => {
-    if (!search) {
-      // When search is cleared, reload current level
+    // Only reload when search is cleared (was non-empty, now empty)
+    const wasSearching = prevSearchRef.current.length > 0
+    prevSearchRef.current = search
+
+    if (!search && wasSearching) {
       if (breadcrumb.length === 0) {
         fetchLocalities({ roots: true })
           .then(setCurrentLocalities)
@@ -79,6 +92,10 @@ export function LocalityPicker({ value, onChange, className }: LocalityPickerPro
           .then(setCurrentLocalities)
           .catch(console.error)
       }
+      return
+    }
+
+    if (!search) {
       return
     }
 

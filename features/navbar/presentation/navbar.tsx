@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid, Search, X } from "lucide-react"
+import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid, Search, X, Plus } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
 import { fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/features/shared/presentation/dropdown-menu";
 import { Input } from "@/features/shared/presentation/input";
+import { AddMineralModal } from "@/features/shared/presentation/add-mineral-modal";
 
 export function Navbar() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
@@ -27,6 +28,8 @@ export function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const [isAddMineralOpen, setIsAddMineralOpen] = useState(false)
+  const [newMineralName, setNewMineralName] = useState("")
   const searchRef = useRef<HTMLDivElement>(null)
   const mobileSearchRef = useRef<HTMLDivElement>(null)
   const mobileInputRef = useRef<HTMLInputElement>(null)
@@ -113,6 +116,15 @@ export function Navbar() {
     router.push(`/mineral/${mineral.id}`)
   }, [router])
 
+  const handleCreateMineral = useCallback(() => {
+    const name = searchQuery.trim()
+    setNewMineralName(name)
+    setSearchQuery("")
+    setIsSearchOpen(false)
+    setIsMobileSearchOpen(false)
+    setIsAddMineralOpen(true)
+  }, [searchQuery])
+
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light"
     setTheme(newTheme)
@@ -132,6 +144,7 @@ export function Navbar() {
   }
 
   return (
+    <>
       <nav
           className={`sticky top-0 z-50 transition-all duration-300 ${
               isScrolled ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm" : "bg-transparent"
@@ -212,6 +225,20 @@ export function Navbar() {
                         </button>
                       ))}
                     </div>
+                  )}
+                  {userEmail && (
+                    <>
+                      <div className="border-t border-border" />
+                      <button
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-accent flex items-center gap-3 transition-colors text-primary"
+                        onClick={handleCreateMineral}
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Plus className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium">Create "{searchQuery}"</span>
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -367,10 +394,32 @@ export function Navbar() {
                     ))}
                   </div>
                 )}
+                {userEmail && (
+                  <>
+                    <div className="border-t border-border" />
+                    <button
+                      className="w-full px-4 py-3 text-left text-sm hover:bg-accent flex items-center gap-3 transition-colors text-primary"
+                      onClick={handleCreateMineral}
+                    >
+                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Plus className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="font-medium">Create "{searchQuery}"</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
         )}
       </nav>
+
+      {isAddMineralOpen && (
+        <AddMineralModal
+          initialName={newMineralName}
+          onClose={() => setIsAddMineralOpen(false)}
+        />
+      )}
+    </>
   )
 }

@@ -11,6 +11,7 @@ import type { Mineral } from "@/types/mineral"
 interface MineralMultiSelectProps {
   value: string[]
   onChange: (mineralIds: string[]) => void
+  onSelectedMineralsChange?: (minerals: Mineral[]) => void
   minerals?: Mineral[]
   maxSelections?: number
   className?: string
@@ -19,6 +20,7 @@ interface MineralMultiSelectProps {
 export function MineralMultiSelect({
   value,
   onChange,
+  onSelectedMineralsChange,
   minerals: propMinerals,
   maxSelections,
   className,
@@ -26,7 +28,9 @@ export function MineralMultiSelect({
   const [search, setSearch] = React.useState("")
   const [isOpen, setIsOpen] = React.useState(false)
   const [minerals, setMinerals] = React.useState<Mineral[]>(propMinerals || [])
+  const [searchResults, setSearchResults] = React.useState<Mineral[]>([])
   const [isLoading, setIsLoading] = React.useState(!propMinerals)
+  const [isSearching, setIsSearching] = React.useState(false)
   const [isCreating, setIsCreating] = React.useState(false)
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -48,6 +52,39 @@ export function MineralMultiSelect({
     }
   }, [propMinerals])
 
+  // Live search minerals with debouncing
+  React.useEffect(() => {
+    if (!search.trim()) {
+      setSearchResults([])
+      setIsSearching(false)
+      return
+    }
+
+    setIsSearching(true)
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const results = await fetchMinerals(search.trim())
+        // Deduplicate results by id
+        const uniqueResults = results.filter(
+          (mineral, index, self) => self.findIndex((m) => m.id === mineral.id) === index
+        )
+        setSearchResults(uniqueResults)
+        // Also update local minerals cache with new results
+        setMinerals((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id))
+          const newMinerals = uniqueResults.filter((m) => !existingIds.has(m.id))
+          return [...prev, ...newMinerals].sort((a, b) => a.name.localeCompare(b.name))
+        })
+      } catch (error) {
+        console.error("Search failed:", error)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 200)
+
+    return () => clearTimeout(debounceTimer)
+  }, [search])
+
   // Close dropdown when clicking outside
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -63,10 +100,18 @@ export function MineralMultiSelect({
     .map((id) => minerals.find((m) => m.id === id))
     .filter((m): m is Mineral => m !== undefined)
 
-  const filteredMinerals = minerals.filter(
-    (m) =>
-      !value.includes(m.id) && m.name.toLowerCase().includes(search.toLowerCase())
-  )
+  // Notify parent of selected minerals when they change
+  React.useEffect(() => {
+    if (onSelectedMineralsChange) {
+      onSelectedMineralsChange(selectedMinerals)
+    }
+  }, [value, minerals, onSelectedMineralsChange])
+
+  // Use live search results if searching, otherwise filter local cache
+  const sourceList = search.trim() ? searchResults : minerals
+  const filteredMinerals = sourceList
+    .filter((m) => !value.includes(m.id))
+    .filter((mineral, index, self) => self.findIndex((m) => m.id === mineral.id) === index)
 
   const canAddMore = !maxSelections || value.length < maxSelections
 
@@ -214,9 +259,9 @@ export function MineralMultiSelect({
       {/* Dropdown */}
       {isOpen && canAddMore && (
         <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover shadow-md">
-          {isLoading ? (
+          {isLoading || isSearching ? (
             <div className="p-3 text-center text-sm text-muted-foreground">
-              Loading minerals...
+              {isSearching ? "Searching..." : "Loading minerals..."}
             </div>
           ) : filteredMinerals.length === 0 ? (
             <div className="p-2">

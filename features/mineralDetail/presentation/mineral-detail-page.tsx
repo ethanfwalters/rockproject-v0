@@ -8,12 +8,14 @@ import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
 import { SpecimenDetail } from "@/features/specimenDetail/presentation/specimen-detail"
-import { ArrowLeft, ImageIcon } from "lucide-react"
+import { ArrowLeft, ImageIcon, Gem } from "lucide-react"
+import Link from "next/link"
 import {
   fetchSpecimens,
   updateSpecimen,
   deleteSpecimen,
 } from "@/features/landingPage/application/client/specimenCrud"
+import { Navbar } from "@/features/navbar/presentation/navbar"
 
 interface SpecimenPreview {
   id: string
@@ -156,6 +158,7 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <Navbar />
         <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-muted-foreground">Loading...</div>
@@ -168,6 +171,7 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
   if (error || !mineral) {
     return (
       <div className="min-h-screen bg-background">
+        <Navbar />
         <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-6 gap-2">
             <ArrowLeft className="h-4 w-4" />
@@ -185,6 +189,7 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <Navbar />
       <div className="mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6 gap-2">
           <ArrowLeft className="h-4 w-4" />
@@ -222,8 +227,67 @@ export function MineralDetailPage({ mineralId }: MineralDetailPageProps) {
                 </div>
               )}
 
+              {mineral.isVariety && mineral.varietyOfMineral && (
+                <div className="mb-6">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Variety of
+                  </span>
+                  <Link
+                    href={`/mineral/${mineral.varietyOfMineral.id}`}
+                    className="flex items-center gap-3 mt-2 p-3 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-colors group"
+                  >
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Gem className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-primary group-hover:underline">
+                        {mineral.varietyOfMineral.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        View parent mineral
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              )}
+
+              {mineral.isVariety && !mineral.varietyOfMineral && (
+                <div className="mb-6">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Gem className="h-3 w-3" />
+                    Variety
+                  </span>
+                </div>
+              )}
+
+              {mineral.varieties && mineral.varieties.length > 0 && (
+                <div className="mb-6">
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Varieties ({mineral.varieties.length})
+                  </span>
+                  <div className="mt-2 space-y-2">
+                    {mineral.varieties.map((variety) => (
+                      <Link
+                        key={variety.id}
+                        href={`/mineral/${variety.id}`}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-transparent hover:bg-muted hover:border-border transition-colors group"
+                      >
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <span className="text-xs font-semibold text-primary">
+                            {variety.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span className="font-medium group-hover:text-primary transition-colors">
+                          {variety.name}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-4">
-                {!mineral.chemicalFormula && (
+                {!mineral.chemicalFormula && !mineral.isVariety && (!mineral.varieties || mineral.varieties.length === 0) && (
                   <div className="p-4 rounded-lg bg-muted/50">
                     <p className="text-sm text-muted-foreground">
                       More information about this mineral will be available soon.

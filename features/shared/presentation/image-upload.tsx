@@ -21,8 +21,8 @@ export function ImageUpload({ currentImageUrl, onImageUrlChange, disabled = fals
 
   const { uploadImage, deleteImage, isUploading, error, progress } = useImageUpload()
 
-  // Handle file selection
-  const handleFileSelect = (file: File) => {
+  // Handle file selection and auto-upload
+  const handleFileSelect = async (file: File) => {
     // Validate file
     const fileSizeMB = file.size / (1024 * 1024)
     if (fileSizeMB > MAX_FILE_SIZE_MB) {
@@ -38,12 +38,22 @@ export function ImageUpload({ currentImageUrl, onImageUrlChange, disabled = fals
 
     setSelectedFile(file)
 
-    // Create preview URL
+    // Create preview URL for immediate display
     const reader = new FileReader()
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string)
     }
     reader.readAsDataURL(file)
+
+    // Auto-upload the file
+    try {
+      const fileUrl = await uploadImage(file)
+      onImageUrlChange(fileUrl)
+      setSelectedFile(null)
+      setPreviewUrl(null)
+    } catch (err) {
+      console.error("Upload failed:", err)
+    }
   }
 
   // Handle file input change
@@ -173,18 +183,7 @@ export function ImageUpload({ currentImageUrl, onImageUrlChange, disabled = fals
 
       {/* Action Buttons */}
       <div className="flex gap-2">
-        {selectedFile && !isUploading && (
-          <>
-            <Button onClick={handleUpload} disabled={disabled} className="flex-1">
-              Upload Image
-            </Button>
-            <Button onClick={handleCancel} variant="outline" disabled={disabled}>
-              Cancel
-            </Button>
-          </>
-        )}
-
-        {currentImageUrl && !selectedFile && (
+        {currentImageUrl && !isUploading && (
           <>
             <Button onClick={() => fileInputRef.current?.click()} variant="outline" disabled={disabled}>
               Change Image

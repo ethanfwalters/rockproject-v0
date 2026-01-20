@@ -8,17 +8,51 @@ export async function GET(request: Request, segmentData: { params: Params }) {
   const params = await segmentData.params
   const id = params.id
 
-  const { data: mineral, error } = await supabase
+  // Try to fetch with variety info join first
+  let mineral: Record<string, unknown> | null = null
+  let error: { code?: string; message: string } | null = null
+
+  const { data: mineralWithVariety, error: varietyError } = await supabase
     .from("minerals")
-    .select("*")
+    .select("*, variety_of_mineral:variety_of(id, name)")
     .eq("id", id)
     .single()
+
+  if (varietyError && varietyError.message?.includes("variety_of")) {
+    // Fallback if variety_of column doesn't exist
+    const { data: basicMineral, error: basicError } = await supabase
+      .from("minerals")
+      .select("*")
+      .eq("id", id)
+      .single()
+    mineral = basicMineral
+    error = basicError
+  } else {
+    mineral = mineralWithVariety
+    error = varietyError
+  }
 
   if (error) {
     if (error.code === "PGRST116") {
       return NextResponse.json({ error: "Mineral not found" }, { status: 404 })
     }
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Fetch varieties of this mineral (minerals that have variety_of = this mineral's id)
+  let varieties: Array<{ id: string; name: string }> = []
+  try {
+    const { data: varietiesData } = await supabase
+      .from("minerals")
+      .select("id, name")
+      .eq("variety_of", id)
+      .order("name", { ascending: true })
+
+    if (varietiesData) {
+      varieties = varietiesData
+    }
+  } catch {
+    // variety_of column might not exist yet
   }
 
   // Get current user (optional - for identifying own specimens)
@@ -81,6 +115,14 @@ export async function GET(request: Request, segmentData: { params: Params }) {
       name: mineral.name,
       chemicalFormula: mineral.chemical_formula,
       isVariety: mineral.is_variety ?? false,
+      varietyOf: mineral.variety_of ?? null,
+      varietyOfMineral: mineral.variety_of_mineral
+        ? {
+            id: (mineral.variety_of_mineral as { id: string; name: string }).id,
+            name: (mineral.variety_of_mineral as { id: string; name: string }).name,
+          }
+        : null,
+      varieties,
       createdAt: mineral.created_at,
     },
     specimens: transformedSpecimens,

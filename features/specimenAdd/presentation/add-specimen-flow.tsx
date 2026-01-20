@@ -33,6 +33,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
     isPublic: false,
   })
   const [minerals, setMinerals] = useState<Mineral[]>([])
+  const [selectedMinerals, setSelectedMinerals] = useState<Mineral[]>([])
   const [localityName, setLocalityName] = useState<string>("")
 
   // Prevent body scroll when modal is open
@@ -58,10 +59,6 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
       setLocalityName("")
     }
   }, [formData.localityId])
-
-  const selectedMinerals = formData.mineralIds
-    ?.map((id) => minerals.find((m) => m.id === id))
-    .filter((m): m is Mineral => m !== undefined) || []
 
   const handleSubmit = () => {
     onAdd(formData)
@@ -146,6 +143,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
               <MineralMultiSelect
                 value={formData.mineralIds || []}
                 onChange={(mineralIds) => setFormData((prev) => ({ ...prev, mineralIds }))}
+                onSelectedMineralsChange={setSelectedMinerals}
                 minerals={minerals}
               />
 

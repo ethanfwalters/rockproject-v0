@@ -21,7 +21,12 @@ export async function createMineral(input: CreateMineralInput): Promise<Mineral>
   const response = await fetch("/api/minerals", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      name: input.name,
+      chemicalFormula: input.chemicalFormula,
+      isVariety: input.isVariety,
+      varietyOf: input.varietyOf,
+    }),
   })
 
   if (!response.ok) {
