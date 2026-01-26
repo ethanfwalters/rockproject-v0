@@ -39,6 +39,10 @@ export async function GET(request: Request, segmentData: { params: Params }) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  if (!mineral) {
+    return NextResponse.json({ error: "Mineral not found" }, { status: 404 })
+  }
+
   // Fetch varieties of this mineral (minerals that have variety_of = this mineral's id)
   let varieties: Array<{ id: string; name: string }> = []
   try {
