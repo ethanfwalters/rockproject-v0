@@ -5,7 +5,6 @@ import { X, Search } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { Input } from "@/features/shared/presentation/input"
 import { Label } from "@/features/shared/presentation/label"
-import { Switch } from "@/features/shared/presentation/switch"
 import { Card } from "@/features/shared/presentation/card"
 import { createMineral, fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
 import type { Mineral } from "@/types/mineral"
@@ -19,7 +18,6 @@ interface AddMineralModalProps {
 export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMineralModalProps) {
   const [name, setName] = useState(initialName)
   const [chemicalFormula, setChemicalFormula] = useState("")
-  const [isVariety, setIsVariety] = useState(false)
   const [varietyOf, setVarietyOf] = useState<Mineral | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,13 +72,6 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Clear varietyOf when isVariety is toggled off
-  useEffect(() => {
-    if (!isVariety) {
-      setVarietyOf(null)
-      setParentSearch("")
-    }
-  }, [isVariety])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,7 +82,7 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
       return
     }
 
-    if (isVariety && !varietyOf) {
+    if (!varietyOf) {
       setError("Please select the parent mineral this is a variety of")
       return
     }
@@ -102,8 +93,8 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
       const mineral = await createMineral({
         name: name.trim(),
         chemicalFormula: chemicalFormula.trim() || undefined,
-        isVariety,
-        varietyOf: varietyOf?.id,
+        isVariety: true,
+        varietyOf: varietyOf.id,
       })
       onSuccess?.(mineral)
       onClose()
@@ -132,9 +123,9 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
           </button>
 
           <div className="mb-6">
-            <h2 className="text-xl font-semibold">Add New Mineral</h2>
+            <h2 className="text-xl font-semibold">Add New Mineral Variety</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add a new mineral to the database
+              Add a new variety of an existing mineral
             </p>
           </div>
 
@@ -145,7 +136,7 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Quartz"
+                placeholder="e.g., Amethyst"
                 autoFocus
               />
             </div>
@@ -160,19 +151,8 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
               />
             </div>
 
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Is this a variety?</p>
-                <p className="text-xs text-muted-foreground">
-                  e.g., Amethyst is a variety of Quartz
-                </p>
-              </div>
-              <Switch checked={isVariety} onCheckedChange={setIsVariety} />
-            </div>
-
-            {isVariety && (
-              <div className="space-y-2" ref={parentSearchRef}>
-                <Label>Variety of *</Label>
+            <div className="space-y-2" ref={parentSearchRef}>
+              <Label>Variety of *</Label>
                 {varietyOf ? (
                   <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
                     <div className="flex items-center gap-2">
@@ -236,7 +216,6 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
                   </div>
                 )}
               </div>
-            )}
 
             {error && (
               <p className="text-sm text-destructive">{error}</p>
@@ -246,8 +225,8 @@ export function AddMineralModal({ initialName = "", onClose, onSuccess }: AddMin
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || !name.trim() || (isVariety && !varietyOf)}>
-                {isSubmitting ? "Adding..." : "Add Mineral"}
+              <Button type="submit" disabled={isSubmitting || !name.trim() || !varietyOf}>
+                {isSubmitting ? "Adding..." : "Add Variety"}
               </Button>
             </div>
           </form>
