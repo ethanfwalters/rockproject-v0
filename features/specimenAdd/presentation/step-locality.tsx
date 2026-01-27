@@ -3,14 +3,7 @@
 import { ChevronRight, ChevronLeft, MapPin } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { LocalityPicker } from "@/features/shared/presentation/locality-picker"
-
-interface StepLocalityProps {
-  localityId: string | undefined
-  onLocalityIdChange: (id: string | undefined) => void
-  onBack: () => void
-  onNext: () => void
-  onSkipToReview: () => void
-}
+import type { StepLocalityProps } from "../domain/types"
 
 export function StepLocality({
   localityId,

@@ -1,13 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-
-export type AdminUser = {
-  id: string
-  user_id: string
-  email: string
-  is_super_admin: boolean
-  granted_at: string
-  created_at: string
-}
+import type { AdminUser } from "../../domain/types"
 
 /**
  * Fetch all admin users

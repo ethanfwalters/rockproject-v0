@@ -1,44 +1,30 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import type { CreateSpecimenInput } from "@/types/specimen"
-import type { Mineral } from "@/types/mineral"
+import { useEffect } from "react"
 import { X } from "lucide-react"
 import { Card } from "@/features/shared/presentation/card"
-import { fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
-import { fetchLocalityWithAncestors } from "@/features/shared/application/client/localitiesCrud"
+import { useAddSpecimenFlow } from "../application/hooks/useAddSpecimenFlow"
 import { StepImage } from "./step-image"
 import { StepMinerals } from "./step-minerals"
 import { StepLocality } from "./step-locality"
 import { StepDimensions } from "./step-dimensions"
 import { StepReview } from "./step-review"
-
-interface AddSpecimenFlowProps {
-  onClose: () => void
-  onAdd: (specimen: CreateSpecimenInput) => void
-}
-
-type Step = "image" | "minerals" | "locality" | "dimensions" | "review"
-
-const STEPS: Step[] = ["image", "minerals", "locality", "dimensions", "review"]
+import { STEPS, type AddSpecimenFlowProps } from "../domain/types"
 
 export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
-  const [step, setStep] = useState<Step>("image")
-  const [formData, setFormData] = useState<CreateSpecimenInput>({
-    imageUrl: "",
-    mineralIds: [],
-    localityId: undefined,
-    length: undefined,
-    width: undefined,
-    height: undefined,
-    isPublic: false,
-  })
-  const [minerals, setMinerals] = useState<Mineral[]>([])
-  const [selectedMinerals, setSelectedMinerals] = useState<Mineral[]>([])
-  const [localityName, setLocalityName] = useState<string>("")
-
-  const currentStepIndex = STEPS.indexOf(step)
-  const canProceed = formData.mineralIds && formData.mineralIds.length > 0
+  const {
+    step,
+    formData,
+    minerals,
+    selectedMinerals,
+    localityName,
+    currentStepIndex,
+    canProceed,
+    setStep,
+    updateFormData,
+    updateDimensions,
+    setSelectedMinerals,
+  } = useAddSpecimenFlow()
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -48,31 +34,8 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
     }
   }, [])
 
-  // Load minerals on mount
-  useEffect(() => {
-    fetchMinerals().then(setMinerals).catch(console.error)
-  }, [])
-
-  // Fetch locality name when localityId changes
-  useEffect(() => {
-    if (formData.localityId) {
-      fetchLocalityWithAncestors(formData.localityId)
-        .then((loc) => setLocalityName(loc.fullPath))
-        .catch(console.error)
-    } else {
-      setLocalityName("")
-    }
-  }, [formData.localityId])
-
   const handleSubmit = () => {
     onAdd(formData)
-  }
-
-  const updateFormData = <K extends keyof CreateSpecimenInput>(
-    key: K,
-    value: CreateSpecimenInput[K]
-  ) => {
-    setFormData((prev) => ({ ...prev, [key]: value }))
   }
 
   return (
@@ -135,14 +98,7 @@ export function AddSpecimenFlow({ onClose, onAdd }: AddSpecimenFlowProps) {
               length={formData.length}
               width={formData.width}
               height={formData.height}
-              onDimensionsChange={(dims) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  length: dims.length,
-                  width: dims.width,
-                  height: dims.height,
-                }))
-              }
+              onDimensionsChange={updateDimensions}
               onBack={() => setStep("locality")}
               onNext={() => setStep("review")}
             />

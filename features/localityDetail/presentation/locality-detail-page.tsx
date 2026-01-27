@@ -22,10 +22,7 @@ import { LocalityHeader } from "./locality-header"
 import { LocalityMap } from "./locality-map"
 import { ChildLocalitiesList } from "./child-localities-list"
 import { EditLocalityForm } from "./edit-locality-form"
-
-interface LocalityDetailPageProps {
-  localityId: string
-}
+import type { LocalityDetailPageProps } from "../domain/types"
 
 export function LocalityDetailPage({ localityId }: LocalityDetailPageProps) {
   const router = useRouter()

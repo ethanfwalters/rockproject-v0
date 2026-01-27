@@ -3,15 +3,7 @@
 import { ChevronRight, ChevronLeft, Ruler } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { DimensionsInput } from "@/features/shared/presentation/dimensions-input"
-
-interface StepDimensionsProps {
-  length?: number
-  width?: number
-  height?: number
-  onDimensionsChange: (dims: { length?: number; width?: number; height?: number }) => void
-  onBack: () => void
-  onNext: () => void
-}
+import type { StepDimensionsProps } from "../domain/types"
 
 export function StepDimensions({
   length,

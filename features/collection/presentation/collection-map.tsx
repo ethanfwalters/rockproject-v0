@@ -1,15 +1,9 @@
 "use client"
 
 import { useMemo, useEffect, useState } from "react"
-import type { Specimen } from "@/types/specimen"
 import { Card } from "@/features/shared/presentation/card"
 import dynamic from "next/dynamic"
-
-interface CollectionMapProps {
-  specimens: Specimen[]
-  height?: string
-  showCard?: boolean
-}
+import type { CollectionMapProps } from "../domain/types"
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
   ssr: false,

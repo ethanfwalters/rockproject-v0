@@ -3,11 +3,7 @@
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardContent } from "@/features/shared/presentation/card"
 import { MapPin, ChevronRight } from "lucide-react"
-import type { Locality } from "@/types/locality"
-
-interface ChildLocalitiesListProps {
-  localities: Locality[]
-}
+import type { ChildLocalitiesListProps } from "../domain/types"
 
 export function ChildLocalitiesList({ localities }: ChildLocalitiesListProps) {
   if (localities.length === 0) {

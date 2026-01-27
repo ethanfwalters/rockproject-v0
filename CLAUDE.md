@@ -33,11 +33,14 @@ features/
   <feature-name>/
     application/     # Business logic, API clients, hooks
       client/        # Client-side data fetching
+      server/        # Server-side data fetching
+    domain/          # where the types would go, other utility function for feature
     presentation/    # UI components (React/TSX)
 ```
 
 Examples:
 - `features/landingPage/application/client/specimenCrud.ts` - Specimen CRUD operations
+- `features/landingPage/domain/types.ts` - Where all the types for the landing page are.
 - `features/collection/presentation/collection-map.tsx` - Map view component
 - `features/shared/presentation/` - Shared UI components (button, input, card, etc.)
 
@@ -68,6 +71,20 @@ Examples:
 - Auth routes: `app/auth/login/`, `app/auth/sign-up/`, `app/auth/sign-up-success/`
 
 ### Type System
+
+All types should be using a zod schema.
+
+there should be a definition of the schema, and then the type should be extracted from that schema
+example:
+```
+const ExampleTypeSchema = z.object({
+   id: z.number(),
+   name: z.string(),
+})
+
+type ExampleType = z.infer<typeof ExampleTypeSchema>
+```
+
 
 Core type: `Specimen` defined in `types/specimen.ts`
 

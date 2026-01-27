@@ -1,24 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-
-export type AppUser = {
-  id: string
-  email: string
-  created_at: string
-  last_sign_in_at: string | null
-  specimen_count: number
-}
-
-export type AppUsersStats = {
-  totalUsers: number
-  usersWithSpecimens: number
-  newUsersThisMonth: number
-  totalSpecimens: number
-}
-
-export type AppUsersResponse = {
-  users: AppUser[]
-  stats: AppUsersStats
-}
+import type { AppUsersResponse } from "../../domain/types"
 
 /**
  * Fetch all app users with stats

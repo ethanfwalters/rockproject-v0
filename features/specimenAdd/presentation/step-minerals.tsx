@@ -1,19 +1,9 @@
 "use client"
 
 import { ChevronRight, ChevronLeft, Gem } from "lucide-react"
-import type { Mineral } from "@/types/mineral"
 import { Button } from "@/features/shared/presentation/button"
 import { MineralMultiSelect } from "@/features/shared/presentation/mineral-multi-select"
-
-interface StepMineralsProps {
-  mineralIds: string[]
-  minerals: Mineral[]
-  onMineralIdsChange: (ids: string[]) => void
-  onSelectedMineralsChange: (minerals: Mineral[]) => void
-  onBack: () => void
-  onNext: () => void
-  onSkipToReview: () => void
-}
+import type { StepMineralsProps } from "../domain/types"
 
 export function StepMinerals({
   mineralIds,

@@ -2,11 +2,11 @@
 
 import type React from "react"
 import { useState } from "react"
-import type { LocalityWithAncestors, CreateLocalityInput } from "@/types/locality"
 import { Button } from "@/features/shared/presentation/button"
 import { Input } from "@/features/shared/presentation/input"
 import { Label } from "@/features/shared/presentation/label"
 import { X, Save } from "lucide-react"
+import type { EditLocalityFormProps } from "../domain/types"
 
 const SUGGESTED_KINDS = [
   "country",
@@ -20,13 +20,6 @@ const SUGGESTED_KINDS = [
   "quarry",
   "deposit",
 ]
-
-interface EditLocalityFormProps {
-  locality: LocalityWithAncestors
-  onSave: (data: Partial<CreateLocalityInput>) => void
-  onCancel: () => void
-  isSaving: boolean
-}
 
 export function EditLocalityForm({ locality, onSave, onCancel, isSaving }: EditLocalityFormProps) {
   const [formData, setFormData] = useState({

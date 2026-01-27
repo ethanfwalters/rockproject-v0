@@ -2,12 +2,7 @@
 
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
-import type { Locality } from "@/types/locality"
-
-interface LocalityBreadcrumbProps {
-  ancestors: Locality[]
-  current: Locality
-}
+import type { LocalityBreadcrumbProps } from "../domain/types"
 
 export function LocalityBreadcrumb({ ancestors, current }: LocalityBreadcrumbProps) {
   // Reverse ancestors to show root first: Country > State > County > Current

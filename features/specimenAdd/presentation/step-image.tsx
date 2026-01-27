@@ -3,13 +3,7 @@
 import { ChevronRight, Image as ImageIcon } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { ImageUpload } from "@/features/shared/presentation/image-upload"
-
-interface StepImageProps {
-  imageUrl: string | undefined
-  onImageUrlChange: (url: string | undefined) => void
-  onCancel: () => void
-  onNext: () => void
-}
+import type { StepImageProps } from "../domain/types"
 
 export function StepImage({ imageUrl, onImageUrlChange, onCancel, onNext }: StepImageProps) {
   return (

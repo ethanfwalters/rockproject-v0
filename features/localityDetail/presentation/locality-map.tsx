@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card } from "@/features/shared/presentation/card"
 import dynamic from "next/dynamic"
-import type { LocalityWithAncestors } from "@/types/locality"
-
-interface LocalityMapProps {
-  locality: LocalityWithAncestors
-  height?: string
-}
+import type { LocalityMapProps } from "../domain/types"
 
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
   ssr: false,

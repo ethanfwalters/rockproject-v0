@@ -3,12 +3,7 @@
 import { Card } from "@/features/shared/presentation/card"
 import { Button } from "@/features/shared/presentation/button"
 import { Pencil, MapPin, Calendar } from "lucide-react"
-import type { LocalityWithAncestors } from "@/types/locality"
-
-interface LocalityHeaderProps {
-  locality: LocalityWithAncestors
-  onEdit?: () => void
-}
+import type { LocalityHeaderProps } from "../domain/types"
 
 export function LocalityHeader({ locality, onEdit }: LocalityHeaderProps) {
   const hasCoordinates =

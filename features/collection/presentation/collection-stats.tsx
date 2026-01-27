@@ -1,6 +1,5 @@
 "use client"
 
-import type {Specimen} from "@/types/specimen"
 import {Card} from "@/features/shared/presentation/card"
 import {
     TrendingUp,
@@ -8,26 +7,9 @@ import {
     MapPin,
     Sparkles
 } from "lucide-react"
-import {useEffect, useMemo} from "react"
+import {useMemo} from "react"
 import {CollectionMap} from "./collection-map"
-import z from "zod"
-
-interface CollectionStatsProps {
-    specimens: Specimen[]
-}
-
-const CollectionStatsSchema = z.object({
-    total: z.number(),
-    mineralCount: z.array(z.object({
-        name: z.string(),
-        count: z.number()
-    })),
-    totalMinerals: z.number(),
-    mostCommon: z.object({name: z.string(), count: z.number()}).nullable(),
-    uniqueLocations: z.number(),
-    recentAdditions: z.array(z.any()), //todo: this needs to be the Specimen type but I don't want to handle that rn
-})
-type CollectionStats = z.infer<typeof CollectionStatsSchema>
+import type { CollectionStats, CollectionStatsProps } from "../domain/types"
 
 
 export function CollectionStats({specimens}: CollectionStatsProps) {

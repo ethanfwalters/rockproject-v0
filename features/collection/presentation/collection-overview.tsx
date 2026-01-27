@@ -14,15 +14,7 @@ import {
 import { Search, LayoutGrid, List, ArrowUpDown, Check, ChevronUp, ChevronDown, Gem } from "lucide-react"
 import Image from "next/image"
 import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
-
-interface CollectionOverviewProps {
-  specimens: Specimen[]
-  onSelectSpecimen: (specimen: Specimen) => void
-}
-
-type ViewMode = "card" | "table"
-type SortOption = "mineral" | "locality" | "date" | "dimensions"
-type SortDirection = "asc" | "desc"
+import type { CollectionOverviewProps, ViewMode, SortOption, SortDirection } from "../domain/types"
 
 export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOverviewProps) {
   const [searchQuery, setSearchQuery] = useState("")

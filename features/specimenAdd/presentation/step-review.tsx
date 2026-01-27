@@ -1,25 +1,10 @@
 "use client"
 
 import { ChevronRight, ChevronLeft, MapPin, Ruler, Globe, Lock } from "lucide-react"
-import type { Mineral } from "@/types/mineral"
 import { Button } from "@/features/shared/presentation/button"
 import { Switch } from "@/features/shared/presentation/switch"
 import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
-
-interface StepReviewProps {
-  imageUrl: string | undefined
-  selectedMinerals: Mineral[]
-  localityName: string
-  length: number | undefined
-  width: number | undefined
-  height: number | undefined
-  isPublic: boolean
-  canSubmit: boolean
-  onVisibilityChange: (isPublic: boolean) => void
-  onBack: () => void
-  onEdit: () => void
-  onSubmit: () => void
-}
+import type { StepReviewProps } from "../domain/types"
 
 export function StepReview({
   imageUrl,

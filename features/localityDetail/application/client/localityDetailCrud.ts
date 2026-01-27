@@ -1,10 +1,5 @@
 import type { LocalityDetail } from "@/types/locality"
-
-export type FetchLocalityDetailOptions = {
-  includeChildren?: boolean
-  includeSpecimens?: boolean
-  includeChildrenSpecimens?: boolean
-}
+import type { FetchLocalityDetailOptions } from "../../domain/types"
 
 export async function fetchLocalityDetail(
   id: string,
