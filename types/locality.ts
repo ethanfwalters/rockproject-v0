@@ -24,3 +24,19 @@ export type CreateLocalityInput = {
   kind: string
   parentId?: string
 }
+
+export type SpecimenPreview = {
+  id: string
+  imageUrl: string | null
+  createdAt: string
+  minerals: Array<{ id: string; name: string }>
+  isPublic: boolean
+  isOwn: boolean
+}
+
+export type LocalityDetail = {
+  locality: LocalityWithAncestors
+  children: Locality[]
+  specimens: SpecimenPreview[]
+  specimenCount: number
+}

@@ -198,10 +198,14 @@ export function SpecimenDetail({
                 )}
                 <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">
                   {specimen.locality && (
-                    <div className="flex items-center gap-2">
+                    <Link
+                      href={`/localities/${specimen.locality.id}`}
+                      className="flex items-center gap-2 hover:text-primary transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <MapPin className="h-4 w-4" />
                       {specimen.locality.fullPath || specimen.locality.name}
-                    </div>
+                    </Link>
                   )}
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />

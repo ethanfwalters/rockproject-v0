@@ -35,6 +35,12 @@ export async function GET(request: Request, segmentData: { params: Params }) {
   const params = await segmentData.params
   const id = params.id
 
+  // Parse query parameters
+  const { searchParams } = new URL(request.url)
+  const includeChildren = searchParams.get("includeChildren") === "true"
+  const includeSpecimens = searchParams.get("includeSpecimens") === "true"
+  const includeChildrenSpecimens = searchParams.get("includeChildrenSpecimens") === "true"
+
   const { data: locality, error } = await supabase
     .from("localities")
     .select("*")
@@ -55,7 +61,8 @@ export async function GET(request: Request, segmentData: { params: Params }) {
   const pathParts = [locality.name, ...ancestors.map((a) => a.name)]
   const fullPath = pathParts.join(", ")
 
-  return NextResponse.json({
+  // Response object
+  const response: Record<string, unknown> = {
     locality: {
       id: locality.id,
       name: locality.name,
@@ -67,7 +74,102 @@ export async function GET(request: Request, segmentData: { params: Params }) {
       ancestors,
       fullPath,
     },
-  })
+  }
+
+  // Fetch children if requested
+  let childIds: string[] = []
+  if (includeChildren || includeChildrenSpecimens) {
+    const { data: children } = await supabase
+      .from("localities")
+      .select("id, name, latitude, longitude, kind, parent_id, created_at")
+      .eq("parent_id", id)
+      .order("name", { ascending: true })
+
+    if (children) {
+      childIds = children.map((c) => c.id)
+      response.children = children.map((c) => ({
+        id: c.id,
+        name: c.name,
+        latitude: c.latitude,
+        longitude: c.longitude,
+        kind: c.kind,
+        parentId: c.parent_id,
+        createdAt: c.created_at,
+      }))
+    } else {
+      response.children = []
+    }
+  }
+
+  // Fetch specimens if requested
+  if (includeSpecimens) {
+    // Get current user for identifying own specimens
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // Build locality IDs to query
+    const localityIds = [id]
+    if (includeChildrenSpecimens && childIds.length > 0) {
+      localityIds.push(...childIds)
+    }
+
+    // Fetch specimens
+    const { data: specimens } = await supabase
+      .from("specimens")
+      .select("id, image_url, created_at, mineral_ids, is_public, user_id, locality_id")
+      .in("locality_id", localityIds)
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(50)
+
+    // Get mineral names for all specimens
+    const allMineralIds = new Set<string>()
+    for (const spec of specimens || []) {
+      if (spec.mineral_ids) {
+        for (const mineralId of spec.mineral_ids) {
+          allMineralIds.add(mineralId)
+        }
+      }
+    }
+
+    let mineralsMap: Record<string, { id: string; name: string }> = {}
+    if (allMineralIds.size > 0) {
+      const { data: minerals } = await supabase
+        .from("minerals")
+        .select("id, name")
+        .in("id", Array.from(allMineralIds))
+
+      if (minerals) {
+        mineralsMap = minerals.reduce(
+          (acc, m) => {
+            acc[m.id] = { id: m.id, name: m.name }
+            return acc
+          },
+          {} as Record<string, { id: string; name: string }>
+        )
+      }
+    }
+
+    const transformedSpecimens = (specimens || []).map((spec) => {
+      const mineralIds = spec.mineral_ids || []
+      const mineralsList = mineralIds.map((mid: string) => mineralsMap[mid]).filter(Boolean)
+
+      return {
+        id: spec.id,
+        imageUrl: spec.image_url,
+        createdAt: spec.created_at,
+        minerals: mineralsList,
+        isPublic: spec.is_public ?? false,
+        isOwn: user ? spec.user_id === user.id : false,
+      }
+    })
+
+    response.specimens = transformedSpecimens
+    response.specimenCount = transformedSpecimens.length
+  }
+
+  return NextResponse.json(response)
 }
 
 export async function PUT(request: Request, segmentData: { params: Params }) {
