@@ -44,7 +44,19 @@ export async function GET(request: Request) {
     createdAt: locality.created_at,
   }))
 
-  return NextResponse.json({ localities: transformedLocalities })
+  // Deduplicate by name (handles NULL parent_id constraint issue)
+  // Keep the first occurrence (oldest by created_at due to query order)
+  const seen = new Set<string>()
+  const deduplicatedLocalities = transformedLocalities.filter((locality) => {
+    const key = `${locality.name}|${locality.parentId ?? "null"}`
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
+
+  return NextResponse.json({ localities: deduplicatedLocalities })
 }
 
 export async function POST(request: Request) {
