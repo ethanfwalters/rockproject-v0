@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import type { LocalityWithAncestors, Locality, SpecimenPreview } from "@/types/locality"
+import type { LocalityWithAncestors, Locality, SpecimenPreview, CreateLocalityInput } from "@/types/locality"
 import type { Specimen, UpdateSpecimenInput } from "@/types/specimen"
 import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
@@ -15,11 +15,13 @@ import {
   deleteSpecimen,
 } from "@/features/landingPage/application/client/specimenCrud"
 import { fetchLocalityDetail } from "@/features/localityDetail/application/client/localityDetailCrud"
+import { updateLocality } from "@/features/shared/application/client/localitiesCrud"
 import { Navbar } from "@/features/navbar/presentation/navbar"
 import { LocalityBreadcrumb } from "./locality-breadcrumb"
 import { LocalityHeader } from "./locality-header"
 import { LocalityMap } from "./locality-map"
 import { ChildLocalitiesList } from "./child-localities-list"
+import { EditLocalityForm } from "./edit-locality-form"
 
 interface LocalityDetailPageProps {
   localityId: string
@@ -35,6 +37,8 @@ export function LocalityDetailPage({ localityId }: LocalityDetailPageProps) {
   const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSavingLocality, setIsSavingLocality] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -100,7 +104,28 @@ export function LocalityDetailPage({ localityId }: LocalityDetailPageProps) {
   }
 
   const handleEdit = () => {
-    // TODO: Open edit modal or navigate to edit page
+    setIsEditing(true)
+  }
+
+  const handleSaveLocality = async (data: Partial<CreateLocalityInput>) => {
+    setIsSavingLocality(true)
+    try {
+      await updateLocality(localityId, data)
+      // Refresh locality data
+      const refreshedData = await fetchLocalityDetail(localityId, {
+        includeChildren: true,
+        includeSpecimens: true,
+        includeChildrenSpecimens: true,
+      })
+      setLocality(refreshedData.locality)
+      setChildren(refreshedData.children)
+      setSpecimens(refreshedData.specimens)
+      setIsEditing(false)
+    } catch (err) {
+      console.error("Failed to update locality:", err)
+    } finally {
+      setIsSavingLocality(false)
+    }
   }
 
   if (isLoading) {
@@ -237,6 +262,24 @@ export function LocalityDetailPage({ localityId }: LocalityDetailPageProps) {
           isUpdating={isUpdating}
           isDeleting={isDeleting}
         />
+      )}
+
+      {/* Edit Locality Modal */}
+      {isEditing && locality && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-sm">
+          <div className="min-h-screen p-4 sm:p-6 lg:p-8">
+            <div className="mx-auto max-w-xl animate-in fade-in zoom-in-95 duration-300">
+              <Card className="border-0 bg-card p-6">
+                <EditLocalityForm
+                  locality={locality}
+                  onSave={handleSaveLocality}
+                  onCancel={() => setIsEditing(false)}
+                  isSaving={isSavingLocality}
+                />
+              </Card>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
