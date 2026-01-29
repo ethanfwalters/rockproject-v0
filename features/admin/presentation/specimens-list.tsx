@@ -22,7 +22,6 @@ export function SpecimensList() {
     specimens,
     loading,
     search,
-    typeFilter,
     sortBy,
     sortOrder,
     page,
@@ -33,16 +32,24 @@ export function SpecimensList() {
     setDeleteId,
     handleDelete,
     handleSearchChange,
-    handleTypeFilterChange,
     handleSortChange,
   } = useSpecimensList()
+
+  function formatDimensions(specimen: (typeof specimens)[number]) {
+    const parts = []
+    if (specimen.length) parts.push(specimen.length)
+    if (specimen.width) parts.push(specimen.width)
+    if (specimen.height) parts.push(specimen.height)
+    if (parts.length === 0) return "-"
+    return `${parts.join(" × ")} mm`
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Specimen Reference Database</h1>
+          <h1 className="text-3xl font-bold">All Specimens</h1>
           <p className="text-muted-foreground mt-2">
             {pagination.total} specimens total
           </p>
@@ -57,34 +64,21 @@ export function SpecimensList() {
 
       {/* Filters */}
       <Card className="p-4">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name..."
+              placeholder="Search by mineral or locality..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9"
             />
           </div>
           <select
-            value={typeFilter}
-            onChange={(e) => handleTypeFilterChange(e.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="">All Types</option>
-            <option value="mineral">Minerals</option>
-            <option value="rock">Rocks</option>
-            <option value="fossil">Fossils</option>
-          </select>
-          <select
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => handleSortChange(e.target.value)}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
           >
-            <option value="name-asc">Name (A-Z)</option>
-            <option value="name-desc">Name (Z-A)</option>
-            <option value="type-asc">Type (A-Z)</option>
             <option value="created_at-desc">Newest First</option>
             <option value="created_at-asc">Oldest First</option>
           </select>
@@ -97,10 +91,10 @@ export function SpecimensList() {
           <table className="w-full">
             <thead className="border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Type</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Hardness</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Composition</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Minerals</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Locality</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Dimensions</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
                 <th className="px-6 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
@@ -120,17 +114,34 @@ export function SpecimensList() {
               ) : (
                 specimens.map((specimen) => (
                   <tr key={specimen.id} className="border-b border-border last:border-0">
-                    <td className="px-6 py-4 capitalize font-medium">{specimen.name}</td>
-                    <td className="px-6 py-4 capitalize">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                        {specimen.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {specimen.hardness || "-"}
+                    <td className="px-6 py-4 font-medium">
+                      {specimen.minerals.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          <span className="capitalize">{specimen.minerals[0].name}</span>
+                          {specimen.minerals.length > 1 && (
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                              +{specimen.minerals.length - 1} more
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
-                      {specimen.composition || "-"}
+                      {specimen.locality?.name || "-"}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {formatDimensions(specimen)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        specimen.isPublic
+                          ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {specimen.isPublic ? "Public" : "Private"}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -194,7 +205,7 @@ export function SpecimensList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Specimen?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this specimen from the reference database. This action cannot be undone.
+              This will permanently delete this specimen. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -51,13 +51,20 @@ export type AppUsersResponse = z.infer<typeof AppUsersResponseSchema>
 
 export const AdminSpecimenSchema = z.object({
   id: z.string(),
-  name: z.string(),
-  type: z.string(),
-  hardness: z.string().nullable(),
-  composition: z.string().nullable(),
-  luster: z.string().nullable(),
-  streak: z.string().nullable(),
-  created_at: z.string(),
+  imageUrl: z.string().nullable().optional(),
+  createdAt: z.string(),
+  minerals: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+  })),
+  locality: z.object({
+    id: z.string(),
+    name: z.string(),
+  }).nullable(),
+  length: z.number().nullable().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
+  isPublic: z.boolean(),
 })
 
 export type AdminSpecimen = z.infer<typeof AdminSpecimenSchema>

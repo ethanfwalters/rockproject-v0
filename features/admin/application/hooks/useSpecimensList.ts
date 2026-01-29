@@ -8,9 +8,8 @@ export function useSpecimensList() {
   const [specimens, setSpecimens] = useState<AdminSpecimen[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [typeFilter, setTypeFilter] = useState("")
-  const [sortBy, setSortBy] = useState("name")
-  const [sortOrder, setSortOrder] = useState("asc")
+  const [sortBy, setSortBy] = useState("created_at")
+  const [sortOrder, setSortOrder] = useState("desc")
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 })
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -23,7 +22,7 @@ export function useSpecimensList() {
         page,
         limit: 20,
         search,
-        type: typeFilter,
+        type: "",
         sortBy,
         sortOrder,
       })
@@ -34,7 +33,7 @@ export function useSpecimensList() {
     } finally {
       setLoading(false)
     }
-  }, [search, typeFilter, sortBy, sortOrder, page])
+  }, [search, sortBy, sortOrder, page])
 
   useEffect(() => {
     loadSpecimens()
@@ -59,11 +58,6 @@ export function useSpecimensList() {
     setPage(1)
   }
 
-  function handleTypeFilterChange(value: string) {
-    setTypeFilter(value)
-    setPage(1)
-  }
-
   function handleSortChange(value: string) {
     const [newSortBy, newSortOrder] = value.split("-")
     setSortBy(newSortBy)
@@ -74,7 +68,6 @@ export function useSpecimensList() {
     specimens,
     loading,
     search,
-    typeFilter,
     sortBy,
     sortOrder,
     page,
@@ -85,7 +78,6 @@ export function useSpecimensList() {
     setDeleteId,
     handleDelete,
     handleSearchChange,
-    handleTypeFilterChange,
     handleSortChange,
   }
 }
