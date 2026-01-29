@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { checkAdminAuth } from "@/lib/admin-auth"
 import { NextResponse } from "next/server"
 
-// GET - Get database statistics
+// GET - Get dashboard statistics
 export async function GET(request: Request) {
   const { isAdmin, user, error: authError } = await checkAdminAuth()
 
@@ -15,36 +16,71 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient()
+  const adminClient = createAdminClient()
 
   try {
-    // Get total count
-    const { count: totalCount } = await supabase
+    // --- Platform stats ---
+
+    // Get all auth users
+    const { data: { users }, error: usersError } = await adminClient.auth.admin.listUsers()
+    if (usersError) throw usersError
+
+    const totalUsers = users.length
+
+    // New users this month
+    const now = new Date()
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const newUsersThisMonth = users.filter((u) => {
+      return new Date(u.created_at) >= firstDayOfMonth
+    }).length
+
+    // User specimens: total count
+    const { count: totalUserSpecimens } = await supabase
+      .from("specimens")
+      .select("*", { count: "exact", head: true })
+
+    // User specimens: created in last 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { count: specimensLast24h } = await supabase
+      .from("specimens")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", twentyFourHoursAgo)
+
+    // User specimens: count by type
+    const { data: userTypeData } = await supabase.from("specimens").select("type")
+
+    const userTypeCounts = { mineral: 0, rock: 0, fossil: 0 }
+    userTypeData?.forEach((item: { type: string }) => {
+      if (item.type in userTypeCounts) {
+        userTypeCounts[item.type as keyof typeof userTypeCounts]++
+      }
+    })
+
+    // --- Reference database stats ---
+
+    // Reference total count
+    const { count: referenceCount } = await supabase
       .from("specimen_reference")
       .select("*", { count: "exact", head: true })
 
-    // Get count by type
+    // Reference count by type
     const { data: typeData } = await supabase.from("specimen_reference").select("type")
 
-    const typeCounts = {
-      mineral: 0,
-      rock: 0,
-      fossil: 0,
-    }
-
+    const typeCounts = { mineral: 0, rock: 0, fossil: 0 }
     typeData?.forEach((item: { type: string }) => {
       if (item.type in typeCounts) {
         typeCounts[item.type as keyof typeof typeCounts]++
       }
     })
 
-    // Get recently added (last 10)
+    // Recently added references (last 10)
     const { data: recentlyAdded } = await supabase
       .from("specimen_reference")
       .select("id, name, type, created_at")
       .order("created_at", { ascending: false })
       .limit(10)
 
-    // Get specimens with missing data
+    // Specimens with missing data
     const { data: allSpecimens } = await supabase.from("specimen_reference").select("hardness, composition")
 
     let missingHardness = 0
@@ -56,7 +92,12 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json({
-      totalCount: totalCount || 0,
+      totalUsers,
+      newUsersThisMonth,
+      totalUserSpecimens: totalUserSpecimens || 0,
+      specimensLast24h: specimensLast24h || 0,
+      userTypeCounts,
+      referenceCount: referenceCount || 0,
       typeCounts,
       recentlyAdded: recentlyAdded || [],
       missingData: {

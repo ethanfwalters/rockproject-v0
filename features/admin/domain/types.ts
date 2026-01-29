@@ -101,7 +101,18 @@ export type Pagination = z.infer<typeof PaginationSchema>
 // ============================================
 
 export const DashboardStatsSchema = z.object({
-  totalCount: z.number(),
+  // Platform stats
+  totalUsers: z.number(),
+  newUsersThisMonth: z.number(),
+  totalUserSpecimens: z.number(),
+  specimensLast24h: z.number(),
+  userTypeCounts: z.object({
+    mineral: z.number(),
+    rock: z.number(),
+    fossil: z.number(),
+  }),
+  // Reference database stats
+  referenceCount: z.number(),
   typeCounts: z.object({
     mineral: z.number(),
     rock: z.number(),
