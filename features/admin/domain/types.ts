@@ -44,3 +44,109 @@ export const AppUsersResponseSchema = z.object({
 })
 
 export type AppUsersResponse = z.infer<typeof AppUsersResponseSchema>
+
+// ============================================
+// Admin Specimen Types
+// ============================================
+
+export const AdminSpecimenSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  hardness: z.string().nullable(),
+  composition: z.string().nullable(),
+  luster: z.string().nullable(),
+  streak: z.string().nullable(),
+  created_at: z.string(),
+})
+
+export type AdminSpecimen = z.infer<typeof AdminSpecimenSchema>
+
+export const SpecimenFormDataSchema = z.object({
+  name: z.string(),
+  type: z.enum(["mineral", "rock", "fossil"]),
+  hardness: z.string(),
+  luster: z.string(),
+  composition: z.string(),
+  streak: z.string(),
+  color: z.string(),
+  crystal_system: z.string(),
+  cleavage: z.string(),
+  fracture: z.string(),
+  specific_gravity: z.string(),
+  description: z.string(),
+  common_locations: z.string(),
+})
+
+export type SpecimenFormData = z.infer<typeof SpecimenFormDataSchema>
+
+export const PaginationSchema = z.object({
+  page: z.number(),
+  limit: z.number(),
+  total: z.number(),
+  totalPages: z.number(),
+})
+
+export type Pagination = z.infer<typeof PaginationSchema>
+
+// ============================================
+// Dashboard Stats Types
+// ============================================
+
+export const DashboardStatsSchema = z.object({
+  totalCount: z.number(),
+  typeCounts: z.object({
+    mineral: z.number(),
+    rock: z.number(),
+    fossil: z.number(),
+  }),
+  recentlyAdded: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      type: z.string(),
+      created_at: z.string(),
+    })
+  ),
+  missingData: z.object({
+    hardness: z.number(),
+    composition: z.number(),
+  }),
+})
+
+export type DashboardStats = z.infer<typeof DashboardStatsSchema>
+
+// ============================================
+// Import Types
+// ============================================
+
+export const ImportResultSchema = z.object({
+  total: z.number(),
+  imported: z.number(),
+  skipped: z.number(),
+  errors: z.array(
+    z.object({
+      row: z.number(),
+      name: z.string(),
+      error: z.string(),
+    })
+  ),
+})
+
+export type ImportResult = z.infer<typeof ImportResultSchema>
+
+// ============================================
+// Presentation Component Props
+// ============================================
+
+export interface AdminLayoutProps {
+  children: React.ReactNode
+}
+
+export interface AdminDashboardProps {
+  stats: DashboardStats | null
+}
+
+export interface SpecimenFormProps {
+  specimenId?: string
+}
