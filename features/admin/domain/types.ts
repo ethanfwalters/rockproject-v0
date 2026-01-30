@@ -196,6 +196,19 @@ export const SubmittedMineralSchema = z.object({
 export type SubmittedMineral = z.infer<typeof SubmittedMineralSchema>
 
 // ============================================
+// Update Mineral Types
+// ============================================
+
+export const UpdateMineralInputSchema = z.object({
+  name: z.string().min(1),
+  chemicalFormula: z.string().nullable().optional(),
+  isVariety: z.boolean(),
+  varietyOf: z.string().nullable().optional(),
+})
+
+export type UpdateMineralInput = z.infer<typeof UpdateMineralInputSchema>
+
+// ============================================
 // Presentation Component Props
 // ============================================
 

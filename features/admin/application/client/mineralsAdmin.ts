@@ -3,6 +3,7 @@ import type {
   AdminMineralsStats,
   Pagination,
   SubmittedMineral,
+  UpdateMineralInput,
 } from "@/features/admin/domain/types"
 
 interface FetchAdminMineralsParams {
@@ -52,6 +53,20 @@ export async function fetchSubmittedMinerals(
   const response = await fetch(`/api/admin/submitted-minerals?${searchParams}`)
   if (!response.ok) throw new Error("Failed to fetch submitted minerals")
   return response.json()
+}
+
+export async function updateMineral(
+  id: string,
+  body: UpdateMineralInput
+): Promise<{ mineral: AdminMineral }> {
+  const response = await fetch(`/api/admin/minerals/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  const result = await response.json()
+  if (!response.ok) throw new Error(result.error || "Failed to update mineral")
+  return result
 }
 
 export async function reviewMineral(

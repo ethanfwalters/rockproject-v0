@@ -7,11 +7,14 @@ import { Input } from "@/features/shared/presentation/input"
 import { Button } from "@/features/shared/presentation/button"
 import { Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { fetchAdminMinerals } from "@/features/admin/application/client/mineralsAdmin"
+import { EditMineralDialog } from "@/features/admin/presentation/edit-mineral-dialog"
+import type { AdminMineral } from "@/features/admin/domain/types"
 
 export function MineralsDatabaseTab() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
+  const [editingMineral, setEditingMineral] = useState<AdminMineral | null>(null)
 
   // Debounce search input
   useEffect(() => {
@@ -94,7 +97,11 @@ export function MineralsDatabaseTab() {
                 </tr>
               ) : (
                 minerals.map((mineral) => (
-                  <tr key={mineral.id} className="border-b border-border last:border-0">
+                  <tr
+                    key={mineral.id}
+                    className="border-b border-border last:border-0 cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => setEditingMineral(mineral)}
+                  >
                     <td className="px-6 py-4 font-medium capitalize">{mineral.name}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
                       {mineral.chemicalFormula || "\u2014"}
@@ -152,6 +159,11 @@ export function MineralsDatabaseTab() {
           </div>
         )}
       </Card>
+
+      <EditMineralDialog
+        mineral={editingMineral}
+        onOpenChange={(open) => { if (!open) setEditingMineral(null) }}
+      />
     </div>
   )
 }
