@@ -106,30 +106,13 @@ export const DashboardStatsSchema = z.object({
   newUsersThisMonth: z.number(),
   totalUserSpecimens: z.number(),
   specimensLast24h: z.number(),
-  userTypeCounts: z.object({
-    mineral: z.number(),
-    rock: z.number(),
-    fossil: z.number(),
-  }),
-  // Reference database stats
-  referenceCount: z.number(),
-  typeCounts: z.object({
-    mineral: z.number(),
-    rock: z.number(),
-    fossil: z.number(),
-  }),
-  recentlyAdded: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      type: z.string(),
-      created_at: z.string(),
-    })
-  ),
-  missingData: z.object({
-    hardness: z.number(),
-    composition: z.number(),
-  }),
+  // Minerals stats
+  pendingMineralsCount: z.number(),
+  approvedMineralsCount: z.number(),
+  varietyMineralsCount: z.number(),
+  // Localities stats
+  totalLocalities: z.number(),
+  localityKindCounts: z.record(z.string(), z.number()),
 })
 
 export type DashboardStats = z.infer<typeof DashboardStatsSchema>
@@ -216,9 +199,7 @@ export interface AdminLayoutProps {
   children: React.ReactNode
 }
 
-export interface AdminDashboardProps {
-  stats: DashboardStats | null
-}
+export interface AdminDashboardProps {}
 
 export interface SpecimenFormProps {
   specimenId?: string

@@ -46,49 +46,42 @@ export async function GET(request: Request) {
       .select("*", { count: "exact", head: true })
       .gte("created_at", twentyFourHoursAgo)
 
-    // User specimens: count by type
-    const { data: userTypeData } = await supabase.from("specimens").select("type")
+    // --- Minerals stats ---
 
-    const userTypeCounts = { mineral: 0, rock: 0, fossil: 0 }
-    userTypeData?.forEach((item: { type: string }) => {
-      if (item.type in userTypeCounts) {
-        userTypeCounts[item.type as keyof typeof userTypeCounts]++
-      }
-    })
+    // Pending minerals awaiting approval
+    const { count: pendingMineralsCount } = await supabase
+      .from("minerals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
 
-    // --- Reference database stats ---
+    // Approved minerals count
+    const { count: approvedMineralsCount } = await supabase
+      .from("minerals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved")
 
-    // Reference total count
-    const { count: referenceCount } = await supabase
-      .from("specimen_reference")
+    // Variety minerals count
+    const { count: varietyMineralsCount } = await supabase
+      .from("minerals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved")
+      .eq("is_variety", true)
+
+    // --- Localities stats ---
+
+    // Total localities
+    const { count: totalLocalities } = await supabase
+      .from("localities")
       .select("*", { count: "exact", head: true })
 
-    // Reference count by type
-    const { data: typeData } = await supabase.from("specimen_reference").select("type")
+    // Localities by kind
+    const { data: localityKindData } = await supabase
+      .from("localities")
+      .select("kind")
 
-    const typeCounts = { mineral: 0, rock: 0, fossil: 0 }
-    typeData?.forEach((item: { type: string }) => {
-      if (item.type in typeCounts) {
-        typeCounts[item.type as keyof typeof typeCounts]++
-      }
-    })
-
-    // Recently added references (last 10)
-    const { data: recentlyAdded } = await supabase
-      .from("specimen_reference")
-      .select("id, name, type, created_at")
-      .order("created_at", { ascending: false })
-      .limit(10)
-
-    // Specimens with missing data
-    const { data: allSpecimens } = await supabase.from("specimen_reference").select("hardness, composition")
-
-    let missingHardness = 0
-    let missingComposition = 0
-
-    allSpecimens?.forEach((spec: { hardness: string | null; composition: string | null }) => {
-      if (!spec.hardness) missingHardness++
-      if (!spec.composition) missingComposition++
+    const localityKindCounts: Record<string, number> = {}
+    localityKindData?.forEach((item: { kind: string }) => {
+      localityKindCounts[item.kind] = (localityKindCounts[item.kind] || 0) + 1
     })
 
     return NextResponse.json({
@@ -96,14 +89,11 @@ export async function GET(request: Request) {
       newUsersThisMonth,
       totalUserSpecimens: totalUserSpecimens || 0,
       specimensLast24h: specimensLast24h || 0,
-      userTypeCounts,
-      referenceCount: referenceCount || 0,
-      typeCounts,
-      recentlyAdded: recentlyAdded || [],
-      missingData: {
-        hardness: missingHardness,
-        composition: missingComposition,
-      },
+      pendingMineralsCount: pendingMineralsCount || 0,
+      approvedMineralsCount: approvedMineralsCount || 0,
+      varietyMineralsCount: varietyMineralsCount || 0,
+      totalLocalities: totalLocalities || 0,
+      localityKindCounts,
     })
   } catch (error) {
     console.error("Error fetching stats:", error)
