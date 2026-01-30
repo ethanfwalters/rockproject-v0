@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { checkAdminAuth } from "@/lib/admin-auth"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("minerals")
       .select("*, variety_of_mineral:variety_of(id, name)")
+      .eq("status", "approved")
       .order("name", { ascending: true })
 
     if (search) {
@@ -33,6 +35,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("minerals")
       .select("*")
+      .eq("status", "approved")
       .order("name", { ascending: true })
 
     if (search) {
@@ -89,7 +92,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Parent mineral is required for varieties" }, { status: 400 })
   }
 
-  const insertData: { name: string; chemical_formula?: string; is_variety?: boolean; variety_of?: string } = {
+  // Determine if user is admin
+  let isAdmin = false
+  try {
+    const adminResult = await checkAdminAuth()
+    isAdmin = adminResult.isAdmin
+  } catch {
+    // Not an admin, continue as regular user
+  }
+
+  const insertData: Record<string, unknown> = {
     name: body.name.trim(),
   }
 
@@ -103,6 +115,12 @@ export async function POST(request: Request) {
 
   if (body.varietyOf && typeof body.varietyOf === "string") {
     insertData.variety_of = body.varietyOf
+  }
+
+  // Non-admin users submit as pending
+  if (!isAdmin) {
+    insertData.status = "pending"
+    insertData.submitted_by = user.id
   }
 
   const { data: newMineral, error } = await supabase

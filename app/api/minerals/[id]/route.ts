@@ -16,6 +16,7 @@ export async function GET(request: Request, segmentData: { params: Params }) {
     .from("minerals")
     .select("*, variety_of_mineral:variety_of(id, name)")
     .eq("id", id)
+    .eq("status", "approved")
     .single()
 
   if (varietyError && varietyError.message?.includes("variety_of")) {
@@ -24,6 +25,7 @@ export async function GET(request: Request, segmentData: { params: Params }) {
       .from("minerals")
       .select("*")
       .eq("id", id)
+      .eq("status", "approved")
       .single()
     mineral = basicMineral
     error = basicError

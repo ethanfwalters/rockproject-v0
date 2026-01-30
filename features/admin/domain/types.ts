@@ -154,6 +154,48 @@ export const ImportResultSchema = z.object({
 export type ImportResult = z.infer<typeof ImportResultSchema>
 
 // ============================================
+// Admin Mineral Types
+// ============================================
+
+export const AdminMineralSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  chemicalFormula: z.string().nullable().optional(),
+  isVariety: z.boolean(),
+  varietyOf: z.string().nullable().optional(),
+  varietyOfMineral: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
+  createdAt: z.string(),
+})
+
+export type AdminMineral = z.infer<typeof AdminMineralSchema>
+
+export const AdminMineralsStatsSchema = z.object({
+  total: z.number(),
+  nonVarieties: z.number(),
+  varieties: z.number(),
+})
+
+export type AdminMineralsStats = z.infer<typeof AdminMineralsStatsSchema>
+
+export const SubmittedMineralSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  chemicalFormula: z.string().nullable().optional(),
+  isVariety: z.boolean(),
+  varietyOf: z.string().nullable().optional(),
+  varietyOfMineral: z.object({ id: z.string(), name: z.string() }).nullable().optional(),
+  submittedBy: z.string().nullable().optional(),
+  submitterEmail: z.string().optional(),
+  status: z.enum(["pending", "approved", "rejected"]),
+  adminNotes: z.string().nullable().optional(),
+  reviewedBy: z.string().nullable().optional(),
+  reviewedAt: z.string().nullable().optional(),
+  createdAt: z.string(),
+})
+
+export type SubmittedMineral = z.infer<typeof SubmittedMineralSchema>
+
+// ============================================
 // Presentation Component Props
 // ============================================
 

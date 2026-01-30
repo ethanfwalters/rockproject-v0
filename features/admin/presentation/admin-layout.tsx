@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Database, Home, Upload, Users } from "lucide-react"
+import { Database, Gem, Home, Upload, Users } from "lucide-react"
 import type { AdminLayoutProps } from "@/features/admin/domain/types"
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -27,6 +27,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   <Database className="h-4 w-4" />
                   Specimens
+                </Link>
+                <Link
+                  href="/admin/minerals"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Gem className="h-4 w-4" />
+                  Minerals
                 </Link>
                 <Link
                   href="/admin/import"
