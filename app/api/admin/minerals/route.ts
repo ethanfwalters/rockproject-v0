@@ -40,14 +40,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Calculate stats from a separate query (all approved minerals)
-  const { data: allApproved } = await supabase
-    .from("minerals")
-    .select("is_variety")
-    .eq("status", "approved")
+  // Calculate stats using count queries (avoids PostgREST default 1000 row limit)
+  const [{ count: totalCount }, { count: varietyCount }] = await Promise.all([
+    supabase
+      .from("minerals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved"),
+    supabase
+      .from("minerals")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "approved")
+      .eq("is_variety", true),
+  ])
 
-  const total = allApproved?.length || 0
-  const varieties = allApproved?.filter((m) => m.is_variety).length || 0
+  const total = totalCount || 0
+  const varieties = varietyCount || 0
   const nonVarieties = total - varieties
 
   // Transform snake_case to camelCase
