@@ -21,6 +21,7 @@ import { AddMineralModal } from "@/features/shared/presentation/add-mineral-moda
 export function Navbar() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [username, setUsername] = useState<string | null>(null)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -52,6 +53,20 @@ export function Navbar() {
       } = await supabase.auth.getUser()
       setUserEmail(user?.email || null)
       setIsLoading(false)
+
+      if (user) {
+        try {
+          const response = await fetch("/api/profile")
+          if (response.ok) {
+            const data = await response.json()
+            if (data.profile) {
+              setUsername(data.profile.username)
+            }
+          }
+        } catch {
+          // Profile fetch is non-critical
+        }
+      }
     }
     getUser()
   }, [])
@@ -139,8 +154,10 @@ export function Navbar() {
     router.refresh()
   }
 
-  const getInitials = (email: string) => {
-    return email.charAt(0).toUpperCase()
+  const getInitials = () => {
+    if (username) return username.charAt(0).toUpperCase()
+    if (userEmail) return userEmail.charAt(0).toUpperCase()
+    return "?"
   }
 
   return (
@@ -289,15 +306,15 @@ export function Navbar() {
                               className="flex items-center gap-2 rounded-full pl-1.5 pr-3 hover:bg-accent"
                           >
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-sm font-medium text-primary">{getInitials(userEmail)}</span>
+                              <span className="text-sm font-medium text-primary">{getInitials()}</span>
                             </div>
                             <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 rounded-xl p-2">
                           <div className="px-2 py-2">
-                            <p className="text-sm font-medium">{userEmail}</p>
-                            <p className="text-xs text-muted-foreground">Collector</p>
+                            <p className="text-sm font-medium">{username || userEmail}</p>
+                            <p className="text-xs text-muted-foreground">{username ? userEmail : "Collector"}</p>
                           </div>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => router.push("/collection")} className="rounded-lg cursor-pointer">

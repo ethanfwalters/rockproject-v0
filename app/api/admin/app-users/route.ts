@@ -35,10 +35,21 @@ export async function GET(request: Request) {
       return acc
     }, {}) || {}
 
-    // Combine user data with specimen counts
+    // Get profiles (usernames) for all users
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, username")
+
+    const usernameMap = (profiles || []).reduce((acc: Record<string, string>, p) => {
+      acc[p.user_id] = p.username
+      return acc
+    }, {})
+
+    // Combine user data with specimen counts and usernames
     const usersWithCounts = users.map((u) => ({
       id: u.id,
       email: u.email || "",
+      username: usernameMap[u.id] || null,
       created_at: u.created_at,
       last_sign_in_at: u.last_sign_in_at,
       specimen_count: specimenCounts[u.id] || 0,

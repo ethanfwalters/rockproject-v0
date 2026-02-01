@@ -12,17 +12,32 @@ import { Navbar } from "@/features/navbar/presentation/navbar"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  const validateUsername = (value: string): string | null => {
+    if (value.length < 3) return "Username must be at least 3 characters"
+    if (value.length > 30) return "Username must be at most 30 characters"
+    if (!/^[a-z0-9_]+$/.test(value)) return "Username can only contain lowercase letters, numbers, and underscores"
+    return null
+  }
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
+
+    const usernameError = validateUsername(username)
+    if (usernameError) {
+      setError(usernameError)
+      setIsLoading(false)
+      return
+    }
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
@@ -31,7 +46,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -39,6 +54,21 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
+
+      // Create profile with username
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({ user_id: data.user.id, username })
+
+        if (profileError) {
+          if (profileError.code === "23505") {
+            throw new Error("This username is already taken")
+          }
+          throw new Error(profileError.message)
+        }
+      }
+
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
@@ -71,6 +101,23 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="rock_collector"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                className="h-11"
+                maxLength={30}
+              />
+              <p className="text-xs text-muted-foreground">
+                3-30 characters. Lowercase letters, numbers, and underscores only.
+              </p>
             </div>
 
             <div className="space-y-2">

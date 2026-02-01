@@ -73,10 +73,11 @@ const featuredLocalities = [
 
 interface AuthenticatedHomepageProps {
   userEmail: string
+  username?: string | null
 }
 
-export function AuthenticatedHomepage({ userEmail }: AuthenticatedHomepageProps) {
-  const userName = userEmail.split("@")[0]
+export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHomepageProps) {
+  const userName = username || userEmail.split("@")[0]
 
   return (
     <div className="min-h-screen bg-background">

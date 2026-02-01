@@ -71,6 +71,7 @@ features/
    - `app/api/submitted-minerals/route.ts` - User-submitted minerals pending approval
    - `app/api/localities/route.ts` - Locality CRUD (GET, POST)
    - `app/api/localities/[id]/route.ts` - Individual locality operations (GET, PUT, DELETE)
+   - `app/api/profile/route.ts` - Current user's profile (GET, PUT for username)
    - `app/api/admin/` - Admin-only routes (stats, user management, mineral review, import)
    - All routes enforce user authentication via Supabase
 
@@ -78,6 +79,7 @@ features/
    - **`specimens`** - User-owned specimen collections (RLS protected)
    - **`minerals`** - Reference mineral database with approval workflow
    - **`localities`** - Geographic locations with parent/child hierarchy
+   - **`profiles`** - User profiles with unique usernames (RLS protected, references `auth.users`)
    - **`admin_users`** - Admin and super admin tracking
    - Database transforms between snake_case (DB) and camelCase (API)
 
@@ -128,6 +130,7 @@ Core types defined in `types/`:
 - **`types/specimen.ts`** - `Specimen`, `CreateSpecimenInput`, `UpdateSpecimenInput`
 - **`types/mineral.ts`** - `Mineral`, `CreateMineralInput` (with variety support and approval status)
 - **`types/locality.ts`** - `Locality`, `LocalityWithAncestors`, `LocalityTree`, `LocalityDetail`
+- **`types/profile.ts`** - `Profile`, `ProfileSchema`, `UsernameSchema` (Zod validated, 3-30 chars, lowercase alphanumeric + underscores)
 - **`types/leaflet.d.ts`** - Leaflet type definitions
 
 API routes transform between DB schema (snake_case) and frontend types (camelCase).
@@ -201,7 +204,7 @@ import { createClient } from "@/lib/supabase/client"
 
 ## Database Schema Management
 
-SQL migration scripts in `scripts/` (21 scripts, `001` through `021`):
+SQL migration scripts in `scripts/` (22 scripts, `001` through `022`):
 
 Key migrations:
 - `001` - Create specimens table with RLS
@@ -215,6 +218,7 @@ Key migrations:
 - `019` - Add `variety_of` column for parent mineral references
 - `020` - Fix localities unique constraint
 - `021` - Add mineral approval workflow columns (status, submitted_by, admin_notes, reviewed_by)
+- `022` - Create profiles table with usernames (unique, 3-30 chars, lowercase alphanumeric + underscores), RLS policies, and seed existing users from email prefix
 
 Run migrations directly in Supabase SQL Editor.
 
