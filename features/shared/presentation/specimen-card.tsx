@@ -96,11 +96,11 @@ export function SpecimenCard({
   )
 
   if (href) {
-    return <Link href={href}>{card}</Link>
+    return <Link href={href} className="min-w-0">{card}</Link>
   }
 
   if (onClick) {
-    return <div onClick={onClick}>{card}</div>
+    return <div onClick={onClick} className="min-w-0">{card}</div>
   }
 
   return card
