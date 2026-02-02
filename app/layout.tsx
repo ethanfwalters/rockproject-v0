@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { QueryProvider } from "@/lib/query-provider"
 import "./globals.css"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
