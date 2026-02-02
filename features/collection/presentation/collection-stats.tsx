@@ -43,7 +43,7 @@ export function CollectionStats({specimens}: CollectionStatsProps) {
         }).sort((a, b) => b.count - a.count)
         const uniqueLocations = new Set(specimens.map((specimen) => specimen.localityId)).size
 
-        const sortedByDate = [...specimens].sort((a,b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        const sortedByDate = [...specimens].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
         const recentAdditions = sortedByDate.slice(0, 5)
 
