@@ -96,7 +96,7 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
               </Card>
             </Link>
 
-            <Link href="/collection?view=map" className="group">
+            <Link href="/explore/map" className="group">
               <Card className="p-6 hover:border-primary/50 transition-all hover:shadow-lg">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -104,7 +104,7 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
                   </div>
                   <div>
                     <h3 className="font-semibold">Collection Map</h3>
-                    <p className="text-sm text-muted-foreground">See specimens on a map</p>
+                    <p className="text-sm text-muted-foreground">Explore the community map</p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
