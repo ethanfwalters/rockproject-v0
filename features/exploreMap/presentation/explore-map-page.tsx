@@ -7,7 +7,7 @@ import { fetchPublicMapSpecimens } from "../application/client/publicMapSpecimen
 import { ExploreMap } from "./explore-map"
 
 export function ExploreMapPage() {
-  const { data: specimens = [], isLoading } = useQuery({
+  const { data: specimens = [], isLoading, isError } = useQuery({
     queryKey: ["publicMapSpecimens"],
     queryFn: fetchPublicMapSpecimens,
   })
@@ -36,7 +36,14 @@ export function ExploreMapPage() {
         </div>
 
         {/* Map */}
-        {isLoading ? (
+        {isError ? (
+          <div
+            className="rounded-lg border border-destructive/50 bg-destructive/5 flex items-center justify-center"
+            style={{ height: "calc(100vh - 200px)" }}
+          >
+            <p className="text-sm text-destructive">Failed to load map data. Please try refreshing.</p>
+          </div>
+        ) : isLoading ? (
           <div
             className="rounded-lg bg-muted/30 animate-pulse"
             style={{ height: "calc(100vh - 200px)" }}

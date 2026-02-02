@@ -1,34 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import type { Locality } from "@/types/locality"
-
-async function getAncestors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  parentId: string | null
-): Promise<Array<Locality>> {
-  if (!parentId) return []
-
-  const { data: parent, error } = await supabase
-    .from("localities")
-    .select("id, name, kind, parent_id, created_at")
-    .eq("id", parentId)
-    .single()
-
-  if (error || !parent) return []
-
-  const ancestors = await getAncestors(supabase, parent.parent_id)
-
-  return [
-    {
-      id: parent.id,
-      name: parent.name,
-      kind: parent.kind,
-      parentId: parent.parent_id,
-      createdAt: parent.created_at,
-    },
-    ...ancestors,
-  ]
-}
+import { getAncestors } from "@/lib/api/localities"
 
 export async function GET(
   request: Request,

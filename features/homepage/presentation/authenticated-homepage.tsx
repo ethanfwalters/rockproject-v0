@@ -50,7 +50,7 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
   const userName = username || userEmail.split("@")[0]
   const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null)
 
-  const { data: recentSpecimens = [], isLoading } = useQuery({
+  const { data: recentSpecimens = [], isLoading, isError } = useQuery({
     queryKey: ["recentSpecimens"],
     queryFn: fetchRecentSpecimens,
   })
@@ -147,7 +147,11 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
                 </Button>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                {isLoading
+                {isError ? (
+                  <div className="sm:col-span-2 rounded-lg border border-destructive/50 bg-destructive/5 p-6 text-center">
+                    <p className="text-sm text-destructive">Failed to load recent specimens.</p>
+                  </div>
+                ) : isLoading
                   ? Array.from({ length: TILE_COUNT }).map((_, i) => (
                       <SpecimenCardLoading key={i} />
                     ))

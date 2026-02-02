@@ -87,20 +87,30 @@ export function Navbar() {
       return
     }
 
+    let cancelled = false
     setIsSearching(true)
     const debounceTimer = setTimeout(async () => {
       try {
         const minerals = await fetchMinerals(searchQuery.trim())
-        setSearchResults(minerals.slice(0, 10))
+        if (!cancelled) {
+          setSearchResults(minerals.slice(0, 10))
+        }
       } catch (error) {
-        console.error("Search failed:", error)
-        setSearchResults([])
+        if (!cancelled) {
+          console.error("Search failed:", error)
+          setSearchResults([])
+        }
       } finally {
-        setIsSearching(false)
+        if (!cancelled) {
+          setIsSearching(false)
+        }
       }
     }, 200)
 
-    return () => clearTimeout(debounceTimer)
+    return () => {
+      cancelled = true
+      clearTimeout(debounceTimer)
+    }
   }, [searchQuery])
 
   // Close search dropdown when clicking outside

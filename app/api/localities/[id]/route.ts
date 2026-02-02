@@ -1,34 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { getAncestors } from "@/lib/api/localities"
 
 type Params = Promise<{ id: string }>
-
-async function getAncestors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  parentId: string | null
-): Promise<Array<{ id: string; name: string; kind: string; parentId: string | null }>> {
-  if (!parentId) return []
-
-  const { data: parent, error } = await supabase
-    .from("localities")
-    .select("id, name, kind, parent_id")
-    .eq("id", parentId)
-    .single()
-
-  if (error || !parent) return []
-
-  const ancestors = await getAncestors(supabase, parent.parent_id)
-
-  return [
-    {
-      id: parent.id,
-      name: parent.name,
-      kind: parent.kind,
-      parentId: parent.parent_id,
-    },
-    ...ancestors,
-  ]
-}
 
 export async function GET(request: Request, segmentData: { params: Params }) {
   const supabase = await createClient()

@@ -8,7 +8,7 @@ import { Users, TrendingUp, Package, Calendar, Search, Mail } from "lucide-react
 
 export function AppUsersPage() {
   const [search, setSearch] = useState("")
-  const { data, isLoading } = useAppUsers()
+  const { data, isLoading, isError } = useAppUsers()
 
   if (isLoading) {
     return (
@@ -16,6 +16,17 @@ export function AppUsersPage() {
         <h1 className="text-3xl font-bold">Users</h1>
         <div className="flex items-center justify-center py-12">
           <div className="animate-pulse">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold">Users</h1>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-sm text-destructive">Failed to load users. Please try again.</p>
         </div>
       </div>
     )
