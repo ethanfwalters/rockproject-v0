@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from "react"
 import type { Specimen } from "@/types/specimen"
-import { Card } from "@/features/shared/presentation/card"
 import { Input } from "@/features/shared/presentation/input"
 import { Button } from "@/features/shared/presentation/button"
+import { SpecimenCard } from "@/features/shared/presentation/specimen-card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -187,49 +187,16 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
         (viewMode === "card" ? (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-2">
             {filteredAndSortedSpecimens.map((specimen) => (
-              <Card
+              <SpecimenCard
                 key={specimen.id}
-                className="group cursor-pointer overflow-hidden border-0 bg-card transition-all hover:scale-[1.02] hover:shadow-xl"
+                name={getPrimaryMineral(specimen)}
+                imageUrl={specimen.imageUrl}
+                locality={specimen.locality?.fullPath || specimen.locality?.name || null}
+                dateAdded={specimen.createdAt}
+                additionalMineralsCount={getAdditionalMineralsCount(specimen)}
+                dimensions={formatDimensions(specimen.length, specimen.width, specimen.height) || null}
                 onClick={() => onSelectSpecimen(specimen)}
-              >
-                <div className="relative aspect-square overflow-hidden bg-muted">
-                  {specimen.imageUrl ? (
-                    <Image
-                      src={specimen.imageUrl || "/placeholder.svg"}
-                      alt={getPrimaryMineral(specimen)}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <Gem className="h-16 w-16 opacity-20" />
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <div className="mb-2 flex items-start justify-between">
-                    <h3 className="text-lg font-semibold text-balance">{getPrimaryMineral(specimen)}</h3>
-                    {getAdditionalMineralsCount(specimen) > 0 && (
-                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                        +{getAdditionalMineralsCount(specimen)} more
-                      </span>
-                    )}
-                  </div>
-                  {specimen.locality && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {specimen.locality.fullPath || specimen.locality.name}
-                    </p>
-                  )}
-                  {formatDimensions(specimen.length, specimen.width, specimen.height) && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {formatDimensions(specimen.length, specimen.width, specimen.height)}
-                    </p>
-                  )}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Added {new Date(specimen.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </Card>
+              />
             ))}
           </div>
         ) : (
