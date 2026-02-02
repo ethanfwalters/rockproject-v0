@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight, ChevronLeft, MapPin, Ruler, Globe, Lock } from "lucide-react"
+import { ChevronRight, ChevronLeft, MapPin, Ruler, Lock } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { Switch } from "@/features/shared/presentation/switch"
 import { formatDimensions } from "@/features/shared/presentation/dimensions-input"
@@ -85,19 +85,15 @@ export function StepReview({
       {/* Visibility Toggle */}
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div className="flex items-center gap-3">
-          {isPublic ? (
-            <Globe className="h-5 w-5 text-primary" />
-          ) : (
-            <Lock className="h-5 w-5 text-muted-foreground" />
-          )}
+          <Lock className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="font-medium">{isPublic ? "Public" : "Private"}</p>
+            <p className="font-medium">Private</p>
             <p className="text-sm text-muted-foreground">
-              {isPublic ? "Other users can see this specimen" : "Only you can see this specimen"}
+              Only you can see this specimen
             </p>
           </div>
         </div>
-        <Switch checked={isPublic} onCheckedChange={onVisibilityChange} />
+        <Switch checked={!isPublic} onCheckedChange={(checked) => onVisibilityChange(!checked)} />
       </div>
 
       <div className="flex justify-between gap-3 pt-4">
