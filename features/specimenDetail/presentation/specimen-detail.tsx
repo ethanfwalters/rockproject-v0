@@ -23,10 +23,11 @@ import {
 interface SpecimenDetailProps {
   specimen: Specimen
   onClose: () => void
-  onUpdate: (specimen: UpdateSpecimenInput) => void
-  onDelete: (id: string) => void
-  isUpdating: boolean
-  isDeleting: boolean
+  onUpdate?: (specimen: UpdateSpecimenInput) => void
+  onDelete?: (id: string) => void
+  isUpdating?: boolean
+  isDeleting?: boolean
+  readOnly?: boolean
 }
 
 export function SpecimenDetail({
@@ -34,8 +35,9 @@ export function SpecimenDetail({
   onClose,
   onUpdate,
   onDelete,
-  isUpdating,
-  isDeleting,
+  isUpdating = false,
+  isDeleting = false,
+  readOnly = false,
 }: SpecimenDetailProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -61,12 +63,12 @@ export function SpecimenDetail({
   }, [isImageFullscreen])
 
   const handleSave = (updatedSpecimen: UpdateSpecimenInput) => {
-    onUpdate(updatedSpecimen)
+    onUpdate?.(updatedSpecimen)
     setIsEditing(false)
   }
 
   const handleDelete = () => {
-    onDelete(specimen.id)
+    onDelete?.(specimen.id)
     setShowDeleteDialog(false)
   }
 
@@ -112,26 +114,28 @@ export function SpecimenDetail({
               <X className="h-4 w-4" />
               Close
             </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 bg-transparent"
-                onClick={() => setIsEditing(true)}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            </div>
+            {!readOnly && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 bg-transparent"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-destructive hover:bg-destructive hover:text-destructive-foreground bg-transparent"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Main Content */}

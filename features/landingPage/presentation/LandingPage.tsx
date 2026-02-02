@@ -4,22 +4,22 @@ import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import type { Specimen, CreateSpecimenInput, UpdateSpecimenInput } from "@/types/specimen"
+import type { CreateSpecimenInput } from "@/types/specimen"
 import { CollectionOverview } from "@/features/collection/presentation/collection-overview"
 import { AddSpecimenFlow } from "@/features/specimenAdd/presentation/add-specimen-flow"
-import { SpecimenDetail } from "@/features/specimenDetail/presentation/specimen-detail"
+import { SpecimenViewer } from "@/features/specimenViewer/presentation/specimen-viewer"
 import { CollectionStats } from "@/features/collection/presentation/collection-stats"
 import { Navbar } from "@/features/navbar/presentation/navbar"
 import { Plus } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import {
-    addSpecimen, deleteSpecimen,
-    fetchSpecimens, updateSpecimen
+    addSpecimen,
+    fetchSpecimens,
 } from "@/features/landingPage/application/client/specimenCrud";
 
 export default function LandingPage() {
     const [isAddingSpecimen, setIsAddingSpecimen] = useState(false)
-    const [selectedSpecimen, setSelectedSpecimen] = useState<Specimen | null>(null)
+    const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null)
     const [userEmail, setUserEmail] = useState<string>("")
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -46,15 +46,15 @@ export default function LandingPage() {
     // Open specimen from URL query parameter
     useEffect(() => {
         const specimenId = searchParams.get("specimen")
-        if (specimenId && specimens.length > 0 && !selectedSpecimen) {
+        if (specimenId && specimens.length > 0 && !selectedSpecimenId) {
             const specimen = specimens.find((s) => s.id === specimenId)
             if (specimen) {
-                setSelectedSpecimen(specimen)
+                setSelectedSpecimenId(specimen.id)
                 // Clear the query parameter from URL
                 router.replace("/collection", { scroll: false })
             }
         }
-    }, [searchParams, specimens, selectedSpecimen, router])
+    }, [searchParams, specimens, selectedSpecimenId, router])
 
     const addSpecimenMutation = useMutation({
         mutationFn: addSpecimen,
@@ -64,32 +64,8 @@ export default function LandingPage() {
         },
     })
 
-    const updateSpecimenMutation = useMutation({
-        mutationFn: updateSpecimen,
-        onSuccess: (updatedSpecimen) => {
-            queryClient.invalidateQueries({ queryKey: ["specimens"] })
-            setSelectedSpecimen(updatedSpecimen)
-        },
-    })
-
-    const deleteSpecimenMutation = useMutation({
-        mutationFn: deleteSpecimen,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["specimens"] })
-            setSelectedSpecimen(null)
-        },
-    })
-
     const handleAddSpecimen = (specimen: CreateSpecimenInput) => {
         addSpecimenMutation.mutate(specimen)
-    }
-
-    const handleUpdateSpecimen = (specimen: UpdateSpecimenInput) => {
-        updateSpecimenMutation.mutate(specimen)
-    }
-
-    const handleDeleteSpecimen = (id: string) => {
-        deleteSpecimenMutation.mutate(id)
     }
 
     const handleLogout = async () => {
@@ -138,7 +114,7 @@ export default function LandingPage() {
                 <div className="flex flex-col gap-6 lg:flex-row">
                     {/* Collection Grid */}
                     <div className="flex-1">
-                        <CollectionOverview specimens={specimens} onSelectSpecimen={setSelectedSpecimen} />
+                        <CollectionOverview specimens={specimens} onSelectSpecimen={setSelectedSpecimenId} />
                     </div>
 
                     {/* Stats Panel */}
@@ -151,16 +127,10 @@ export default function LandingPage() {
             {/* Add Specimen Flow */}
             {isAddingSpecimen && <AddSpecimenFlow onClose={() => setIsAddingSpecimen(false)} onAdd={handleAddSpecimen} />}
 
-            {selectedSpecimen && (
-                <SpecimenDetail
-                    specimen={selectedSpecimen}
-                    onClose={() => setSelectedSpecimen(null)}
-                    onUpdate={handleUpdateSpecimen}
-                    onDelete={handleDeleteSpecimen}
-                    isUpdating={updateSpecimenMutation.isPending}
-                    isDeleting={deleteSpecimenMutation.isPending}
-                />
-            )}
+            <SpecimenViewer
+                specimenId={selectedSpecimenId}
+                onClose={() => setSelectedSpecimenId(null)}
+            />
         </div>
     )
 }

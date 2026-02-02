@@ -42,7 +42,7 @@ export type SortDirection = z.infer<typeof SortDirectionSchema>
 
 export interface CollectionOverviewProps {
   specimens: Specimen[]
-  onSelectSpecimen: (specimen: Specimen) => void
+  onSelectSpecimen: (specimenId: string) => void
 }
 
 // ============================================

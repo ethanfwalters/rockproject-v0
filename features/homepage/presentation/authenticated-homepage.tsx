@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import {
   Sparkles,
@@ -18,6 +19,7 @@ import { Button } from "@/features/shared/presentation/button"
 import { Card } from "@/features/shared/presentation/card"
 import { SpecimenCard, SpecimenCardLoading, SpecimenCardEmpty } from "@/features/shared/presentation/specimen-card"
 import { fetchRecentSpecimens } from "@/features/homepage/application/client/recentSpecimens"
+import { SpecimenViewer } from "@/features/specimenViewer/presentation/specimen-viewer"
 
 const TILE_COUNT = 4
 
@@ -46,6 +48,7 @@ interface AuthenticatedHomepageProps {
 
 export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHomepageProps) {
   const userName = username || userEmail.split("@")[0]
+  const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null)
 
   const { data: recentSpecimens = [], isLoading } = useQuery({
     queryKey: ["recentSpecimens"],
@@ -158,7 +161,7 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
                           dateAdded={specimen.createdAt}
                           showAuthor
                           author={specimen.addedBy}
-                          href={`/specimen/${specimen.id}`}
+                          onClick={() => setSelectedSpecimenId(specimen.id)}
                         />
                       ) : (
                         <SpecimenCardEmpty key={`empty-${i}`} />
@@ -280,6 +283,11 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
           </div>
         </div>
       </main>
+
+      <SpecimenViewer
+        specimenId={selectedSpecimenId}
+        onClose={() => setSelectedSpecimenId(null)}
+      />
 
       {/* Footer */}
       <footer className="border-t border-border mt-16">

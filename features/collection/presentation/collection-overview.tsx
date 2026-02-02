@@ -195,7 +195,7 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                 dateAdded={specimen.createdAt}
                 additionalMineralsCount={getAdditionalMineralsCount(specimen)}
                 dimensions={formatDimensions(specimen.length, specimen.width, specimen.height) || null}
-                onClick={() => onSelectSpecimen(specimen)}
+                onClick={() => onSelectSpecimen(specimen.id)}
               />
             ))}
           </div>
@@ -249,7 +249,7 @@ export function CollectionOverview({ specimens, onSelectSpecimen }: CollectionOv
                     <tr
                       key={specimen.id}
                       className="cursor-pointer transition-colors hover:bg-muted/50"
-                      onClick={() => onSelectSpecimen(specimen)}
+                      onClick={() => onSelectSpecimen(specimen.id)}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
