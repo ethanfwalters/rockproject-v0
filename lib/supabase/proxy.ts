@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
   // Redirect to collection if user is authenticated and trying to access auth pages
   if (user && request.nextUrl.pathname.startsWith("/auth")) {
     const url = request.nextUrl.clone()
-    url.pathname = "/collection"
+    url.pathname = "/"
     return NextResponse.redirect(url)
   }
 
