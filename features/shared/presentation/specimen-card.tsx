@@ -27,6 +27,7 @@ interface SpecimenCardProps {
   dateAdded: string
   showAuthor?: boolean
   author?: string
+  authorUsername?: string
   additionalMineralsCount?: number
   dimensions?: string | null
   onClick?: () => void
@@ -40,6 +41,7 @@ export function SpecimenCard({
   dateAdded,
   showAuthor = false,
   author,
+  authorUsername,
   additionalMineralsCount,
   dimensions,
   onClick,
@@ -82,7 +84,17 @@ export function SpecimenCard({
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
           {showAuthor && author ? (
             <>
-              <span className="text-xs text-muted-foreground">by {author}</span>
+              {authorUsername && authorUsername !== "anonymous" ? (
+                <Link
+                  href={`/profile/${authorUsername}`}
+                  className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  by {author}
+                </Link>
+              ) : (
+                <span className="text-xs text-muted-foreground">by {author}</span>
+              )}
               <span className="text-xs text-muted-foreground">{formatTimeAgo(dateAdded)}</span>
             </>
           ) : (

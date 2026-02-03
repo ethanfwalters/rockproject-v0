@@ -24,7 +24,17 @@ export function ExploreMap({ specimens }: ExploreMapProps) {
             {s.locality.displayName}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            by {s.addedBy}
+            by{" "}
+            {s.addedBy !== "anonymous" ? (
+              <a
+                href={`/profile/${s.addedBy}`}
+                className="hover:text-primary hover:underline"
+              >
+                {s.addedBy}
+              </a>
+            ) : (
+              s.addedBy
+            )}
           </p>
         </div>
       ),

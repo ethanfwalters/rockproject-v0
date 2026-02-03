@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, User, Mail, Calendar, Shield, AtSign, Pencil, Check, X } from "lucide-react"
+import { ArrowLeft, User, Mail, Calendar, Shield, AtSign, Pencil, Check, X, ExternalLink } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { Input } from "@/features/shared/presentation/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/features/shared/presentation/card"
@@ -207,6 +207,18 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
+
+                        {username && !isEditingUsername && (
+                            <div className="px-4 -mt-3 mb-1">
+                                <Link
+                                    href={`/profile/${username}`}
+                                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                                >
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                    View your public profile
+                                </Link>
+                            </div>
+                        )}
 
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/50">
                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">

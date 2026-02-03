@@ -165,6 +165,7 @@ export function AuthenticatedHomepage({ userEmail, username }: AuthenticatedHome
                           dateAdded={specimen.createdAt}
                           showAuthor
                           author={specimen.addedBy}
+                          authorUsername={specimen.addedBy}
                           onClick={() => setSelectedSpecimenId(specimen.id)}
                         />
                       ) : (
