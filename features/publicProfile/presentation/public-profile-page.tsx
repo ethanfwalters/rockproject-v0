@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Gem, MapPin, Calendar, Pencil, User } from "lucide-react"
+import { Gem, MapPin, Calendar, Settings, User } from "lucide-react"
 import { Navbar } from "@/features/navbar/presentation/navbar"
 import { Card } from "@/features/shared/presentation/card"
 import {
@@ -102,10 +102,10 @@ export function PublicProfilePage({ username }: PublicProfilePageProps) {
             {isOwnProfile && (
               <Link
                 href="/profile"
-                className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mt-2"
               >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit Profile
+                <Settings className="h-3.5 w-3.5" />
+                Account Settings
               </Link>
             )}
           </div>

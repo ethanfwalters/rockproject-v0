@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, User, Mail, Calendar, Shield, AtSign, Pencil, Check, X, ExternalLink } from "lucide-react"
+import { User, Mail, Calendar, Shield, AtSign, Pencil, Check, X } from "lucide-react"
 import { Button } from "@/features/shared/presentation/button"
 import { Input } from "@/features/shared/presentation/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/features/shared/presentation/card"
@@ -133,17 +133,12 @@ export default function ProfilePage() {
         <div className="min-h-screen bg-background">
             <Navbar />
             <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-                <Button variant="ghost" onClick={() => router.push("/collection")} className="mb-6 gap-2 rounded-full">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Collection
-                </Button>
-
                 <Card className="rounded-2xl border-border/50 py-6">
                     <CardHeader className="text-center pb-2">
                         <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-4xl font-semibold text-primary">{getInitials()}</span>
                         </div>
-                        <CardTitle className="text-2xl">Your Profile</CardTitle>
+                        <CardTitle className="text-2xl">Account Settings</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6 pt-4">
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/50">
@@ -207,18 +202,6 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </div>
-
-                        {username && !isEditingUsername && (
-                            <div className="px-4 -mt-3 mb-1">
-                                <Link
-                                    href={`/profile/${username}`}
-                                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                                >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                    View your public profile
-                                </Link>
-                            </div>
-                        )}
 
                         <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/50">
                             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">

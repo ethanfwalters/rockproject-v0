@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid, Search, X, Plus } from "lucide-react"
+import { Moon, Sun, User, LogOut, ChevronDown, LayoutGrid, Search, X, Plus, Settings } from "lucide-react"
 
 import { createClient } from "@/lib/supabase/client"
 import { fetchMinerals } from "@/features/shared/application/client/mineralsCrud"
@@ -331,9 +331,13 @@ export function Navbar() {
                             <LayoutGrid className="mr-2 h-4 w-4" />
                             Collection
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => router.push("/profile")} className="rounded-lg cursor-pointer">
+                          <DropdownMenuItem onClick={() => router.push(username ? `/profile/${username}` : "/profile")} className="rounded-lg cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push("/profile")} className="rounded-lg cursor-pointer">
+                            <Settings className="mr-2 h-4 w-4" />
+                            Settings
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
