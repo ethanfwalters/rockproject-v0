@@ -23,6 +23,10 @@ npm run lint
 
 # Run tests
 npx vitest
+
+# Seed fake data (requires SUPABASE_SERVICE_ROLE_KEY in .env.local)
+npm run seed          # Create 10 fake users with ~50 specimens
+npm run seed:cleanup  # Remove all fake users and their data
 ```
 
 ## Architecture
@@ -221,6 +225,16 @@ Key migrations:
 - `022` - Create profiles table with usernames (unique, 3-30 chars, lowercase alphanumeric + underscores), RLS policies, and seed existing users from email prefix
 
 Run migrations directly in Supabase SQL Editor.
+
+### Seed Scripts
+
+Fake data seed scripts in `scripts/` for development/testing:
+
+- `scripts/seed-config.ts` - Shared constants (email domain, user/specimen counts, password)
+- `scripts/seed.ts` - Creates fake users with randomized specimens (uses service role key to bypass RLS)
+- `scripts/seed-cleanup.ts` - Removes all fake users by `@fake.terralis.dev` email domain (CASCADE deletes profiles + specimens)
+
+Fake users are identifiable by their `@fake.terralis.dev` email domain. Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
 
 ## Environment Variables
 

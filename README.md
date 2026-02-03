@@ -29,6 +29,17 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Seeding Fake Data
+
+Seed scripts create fake users and specimens for development/testing. Requires `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.
+
+```bash
+npm run seed          # Create 10 fake users with ~50 specimens
+npm run seed:cleanup  # Remove all fake users and their data
+```
+
+Fake users use `@fake.terralis.dev` emails so cleanup can reliably identify and remove them. Configuration (user count, specimen count, etc.) lives in `scripts/seed-config.ts`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
